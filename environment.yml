@@ -1,0 +1,18 @@
+name: reinforcement_learning_assignment
+channels:
+  - nvidia
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - pytorch
+  - cudatoolkit=11.7
+  - gymnasium
+  - imageio
+  - pip
+  - pip:
+    - grid2op
+    - lightsim2grid
+    - stable-baselines3
