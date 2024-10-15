@@ -62,22 +62,30 @@ class Gym2OpEnv(gym.Env):
     def setup_observations(self):
         obs, _ = self._gym_env.reset()
         self._gym_env.observation_space = BoxGymObsSpace(self._g2op_env.observation_space,
-                                                   attr_to_keep=["gen_p", "load_p", "topo_vect",
-                                                                 "rho", "actual_dispatch", "connectivity_matrix"],
-                                                   divide={"gen_p": self._g2op_env.gen_pmax,
-                                                           "load_p": obs['load_p'],
-                                                           "actual_dispatch": self._g2op_env.gen_pmax},
-                                                   functs={"connectivity_matrix": (
-                                                       lambda grid2obs: grid2obs.connectivity_matrix().flatten(),
-                                                       0., 1., None, None,
-                                                   )
-                                                   }
-                                                   )
-
+                                                         attr_to_keep=[
+                                                             "gen_p", "load_p", "topo_vect",
+                                                             "rho", "actual_dispatch", "connectivity_matrix",
+                                                             "line_status",  # New addition
+                                                             "v_or",  # Voltage observation
+                                                         ],
+                                                         divide={"gen_p": self._g2op_env.gen_pmax,
+                                                                 "load_p": obs['load_p'],
+                                                                 "actual_dispatch": self._g2op_env.gen_pmax},
+                                                         functs={"connectivity_matrix": (
+                                                             lambda grid2obs: grid2obs.connectivity_matrix().flatten(),
+                                                             0., 1., None, None,
+                                                         )}
+                                                         )
 
     def setup_actions(self):
         reencoded_act_space = DiscreteActSpace(self._g2op_env.action_space,
-                                               attr_to_keep=["set_line_status", "set_bus", "redispatch"])
+                                               attr_to_keep=[
+                                                   "set_line_status",
+                                                   "set_bus",
+                                                   "redispatch",
+                                                   "curtail",  # New addition
+                                                   "set_storage"  # New addition
+                                               ])
         self._gym_env.action_space = reencoded_act_space
 
 

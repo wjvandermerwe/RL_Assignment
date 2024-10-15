@@ -13,7 +13,7 @@ class PPOPolicyNetwork(BasePolicy):
     Feed-forward network with separate heads for policy and value function.
     """
 
-    def __init__(self, observation_space, action_space, lr_schedule):
+    def __init__(self, observation_space, action_space, lr_schedule, **kwargs):
         super(PPOPolicyNetwork, self).__init__(observation_space, action_space)
 
         obs_shape = observation_space.shape[0]
@@ -54,30 +54,55 @@ class PPOPolicyNetwork(BasePolicy):
         dist = Categorical(logits=log_probs)
         return dist.log_prob(actions), entropy, values
 
+    def _predict(self, obs, deterministic=False):
+        """
+        Predict action given an observation.
+        """
+        action, _, _, _ = self.forward(obs, deterministic=deterministic)
+        return action
+
 
 # Basic PPO Algorithm
-class BasicPPO(OnPolicyAlgorithm):
+class CustomPPO(OnPolicyAlgorithm):
     """
-    A simple PPO implementation extending from OnPolicyAlgorithm (based on Stable Baselines3).
+    PPO implementation extending from OnPolicyAlgorithm.
     """
 
-    def __init__(self, policy, env, learning_rate=3e-4, gamma=0.99, clip_ratio=0.2, **kwargs):
-        # Super constructor calls the parent class's initialization
-        super(BasicPPO, self).__init__(policy=policy, env=env, learning_rate=learning_rate, gamma=gamma, **kwargs)
+    def __init__(self,
+                 policy,
+                 env,
+                 learning_rate=3e-4,
+                 n_steps=2048,
+                 batch_size=64,
+                 n_epochs=10,
+                 gamma=0.99,
+                 clip_range=0.2,
+                 **kwargs):
+        super().__init__(policy=policy,
+                                        env=env,
+                                        learning_rate=learning_rate,
+                                        n_steps=n_steps,
+                                        gamma=gamma,
+                                        # gae_lambda=0.95,
+                                        # ent_coef=0.0,
+                                        # vf_coef=0.5,
+                                        # max_grad_norm=0.5,
+                                        # use_sde=False,
+                                        # sde_sample_freq=-1,
+                                        **kwargs)
 
-        # PPO-specific attributes
-        self.clip_ratio = clip_ratio
-        self.ent_coef = 0.01  # Entropy coefficient
-        self.vf_coef = 0.5  # Value function coefficient
+        self.clip_range = clip_range
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
 
-        # Optimizer for the policy network
-        self.policy = policy
+        # Initialize the policy
+        # self.policy = policy(observation_space=env.observation_space, action_space=env.action_space,
+        #                      lr_schedule=lambda _: learning_rate)
+
+        # Initialize optimizer
         self.optimizer = optim.Adam(self.policy.parameters(), lr=learning_rate)
 
     def ppo_loss(self, data):
-        """
-        Compute PPO loss based on the collected rollouts.
-        """
         obs, actions, old_log_probs, returns, advantages = data
 
         # Get new log probs, entropy, and values from the current policy
@@ -85,13 +110,13 @@ class BasicPPO(OnPolicyAlgorithm):
 
         # Calculate PPO loss with clipping
         ratio = torch.exp(log_probs - old_log_probs)
-        clipped_ratio = torch.clamp(ratio, 1 - self.clip_ratio, 1 + self.clip_ratio)
+        clipped_ratio = torch.clamp(ratio, 1 - self.clip_range, 1 + self.clip_range)
         policy_loss = torch.min(ratio * advantages, clipped_ratio * advantages).mean()
 
         # Value function loss
         value_loss = F.mse_loss(returns, values)
 
-        # Combined loss (including entropy to encourage exploration)
+        # Combined loss
         loss = -policy_loss + self.vf_coef * value_loss - self.ent_coef * entropy.mean()
         return loss
 
@@ -106,29 +131,31 @@ class BasicPPO(OnPolicyAlgorithm):
         loss.backward()
         self.optimizer.step()
 
-    def collect_rollouts(self, env, n_steps):
-        """
-        Collect rollouts from the environment and store them for training.
-        """
-        rollout_buffer = self.rollout_buffer
-        rollout_buffer.reset()
+    # def act(self, obs, deterministic=False):
+    #     obs_tensor = torch.tensor(obs, dtype=torch.float32)
+    #     with torch.no_grad():
+    #         action, _, _, _ = self.policy(obs_tensor)
+    #     return action.item()
 
-        obs = env.reset()
-
-        for step in range(n_steps):
-            # Get action and value from policy
-            with torch.no_grad():
-                obs_tensor = torch.tensor(obs, dtype=torch.float32)
-                action, log_prob, entropy, value = self.policy(obs_tensor)
-
-            # Execute action in the environment
-            next_obs, reward, done, _ = env.step(action.item())
-
-            # Store transition in rollout buffer
-            rollout_buffer.add(obs, action, reward, done, value, log_prob)
-
-            obs = next_obs
-            if done:
-                obs = env.reset()
-
-        return rollout_buffer
+    # def collect_rollouts(self, env, n_steps):
+    #     """
+    #     Collect rollouts from the environment.
+    #     """
+    #     rollout_buffer = RolloutBuffer(n_steps, env.observation_space, env.action_space, device=self.device, gamma=self.gamma, gae_lambda=self.gae_lambda)
+    #
+    #     obs = env.reset()
+    #     for step in range(n_steps):
+    #         action = self.act(obs)
+    #
+    #         # Execute action in the environment
+    #         next_obs, reward, done, _ = env.step(action)
+    #
+    #         # Store transition
+    #         rollout_buffer.add(obs, action, reward, done)
+    #
+    #         obs = next_obs
+    #         if done:
+    #             obs = env.reset()
+    #
+    #     rollout_buffer.compute_returns_and_advantage(last_values=None, dones=done)
+    #     return rollout_buffer

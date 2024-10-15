@@ -10,6 +10,6 @@ class RLAgent(BaseAgent):
 
     def act(self, obs, reward, done):
         gym_obs = self.gym_env.observation_space.to_gym(obs)
-        gym_act = self.model.act(gym_obs)
-        grid2op_act = self.gym_env.action_space.from_gym(gym_act)
+        gym_act = self.model.predict(gym_obs)
+        grid2op_act = self.gym_env.action_space.from_gym(gym_act[0])
         return grid2op_act

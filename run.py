@@ -2,7 +2,9 @@ import torch
 from grid2op.Episode import EpisodeReplay
 
 from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.dqn import MultiInputPolicy
+from stable_baselines3.ppo import MultiInputPolicy, MlpPolicy
+
+# from stable_baselines3.dqn import MultiInputPolicy
 
 from env.env import Gym2OpEnv  # Assuming the environment setup code is in env_setup.py
 from grid2op.Runner import Runner
@@ -11,6 +13,16 @@ from models.agent import RLAgent
 from models.dqn_model import CustomDQN
 
 import logging
+
+from models.ppo_model import CustomPPO, PPOPolicyNetwork
+
+# logging.getLogger('pandapower').setLevel(logging.WARNING)
+#
+# # Suppress grid2op Runner logs
+# logging.getLogger('grid2op.Environment').setLevel(logging.WARNING)
+#
+# # Optionally, if you want to suppress all logs (not recommended in most cases):
+# logging.getLogger().setLevel(logging.CRITICAL)
 
 
 def main():
@@ -24,25 +36,36 @@ def main():
     # flattened_env = FlattenObservation(env)
     # vec_env = DummyVecEnv([lambda: flattened_env])
     # Step 3: Create the DQN model
-    dqn_model = CustomDQN(
-        policy=MultiInputPolicy,
-        env=env,
-        learning_rate=1e-3,
-        buffer_size=10000,
-        tau=0.005,
-        gamma=0.99,
-    )
+    # dqn_model = CustomDQN(
+    #     policy=MultiInputPolicy,
+    #     env=env,
+    #     learning_rate=1e-3,
+    #     buffer_size=10000,
+    #     tau=0.005,
+    #     gamma=0.99,
+    # )
+
+    ppo = CustomPPO(policy=MlpPolicy,
+                   env=env,
+                   ent_coef = 0.0,
+                   vf_coef= 0.5,
+                   gae_lambda = 0.95,
+                   n_steps = 2048,
+                   max_grad_norm=0.5,
+                   use_sde = False,
+                   sde_sample_freq=-1)
 
     # Step 4: Create the Grid2Op-compatible DQN agent
-    agent = RLAgent(model=dqn_model, gym_env=env)
-
+    agent = RLAgent(model=ppo, gym_env=env)
+    params =  env._g2op_env.get_params_for_runner()
+    del params["verbose"]
     # Step 5: Set up the Runner
-    runner = Runner(**env._g2op_env.get_params_for_runner(), agentInstance = agent, agentClass=None)
+    runner = Runner(**params, agentInstance= agent, agentClass=None, verbose=False)
 
     # Step 6: Run the agent in the environment for a set number of episodes
-    results = runner.run(nb_episode=5, path_save="runs", add_detailed_output=True)
+    results = runner.run(nb_episode=100, path_save="runs")
     plot_epi = EpisodeReplay("runs")
-    plot_epi.replay_episode(results[0][1], gif_name="test")
+    plot_epi.replay_episode(results[15][1], gif_name="test")
     # Step 7: Print out the performance results for each episode
     print("Runner results:")
     for ep_idx, episode in enumerate(results):

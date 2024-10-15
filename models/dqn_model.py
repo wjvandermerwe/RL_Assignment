@@ -94,26 +94,62 @@ class CustomDQN(OffPolicyAlgorithm):
             self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
         return action
 
-    def train_step(self, batch):
+    def _process_batch(self, batch):
+        """
+        Convert the batch data into tensors and send to device.
+        """
         states, actions, rewards, next_states, dones = batch
         states = torch.tensor(states, dtype=torch.float32).to(self.device)
         actions = torch.tensor(actions, dtype=torch.long).to(self.device)
         rewards = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         next_states = torch.tensor(next_states, dtype=torch.float32).to(self.device)
         dones = torch.tensor(dones, dtype=torch.float32).to(self.device)
+        return states, actions, rewards, next_states, dones
 
-        q_values = self.q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+    def _compute_q_values(self, states, actions):
+        """
+        Get Q-values for the actions taken.
+        """
+        return self.q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+
+    def _compute_target_q_values(self, rewards, next_states, dones):
+        """
+        Compute the target Q-values using the target network (Fixed Q-Targets).
+        """
         with torch.no_grad():
             next_q_values = self.q_net_target(next_states).max(1)[0]
             target_q_values = rewards + self.gamma * next_q_values * (1 - dones)
+        return target_q_values
+
+    def train_step(self, batch):
+        states, actions, rewards, next_states, dones = self._process_batch(batch)
+
+        q_values = self._compute_q_values(states, actions)
+
+        target_q_values = self._compute_target_q_values(rewards, next_states, dones)
 
         loss = F.mse_loss(q_values, target_q_values)
+
+        self._optimize_model(loss)
+
+        return loss.item()
+
+    def _optimize_model(self, loss):
+        """
+        Perform the optimization step for backpropagation.
+        """
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.q_net.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
-        return loss.item()
+
+
+    def _adjust_exploration_rate(self):
+        """
+        Decay the exploration rate (epsilon) based on epsilon decay schedule.
+        """
+        self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
 
     def train(self, gradient_steps: int, batch_size: int = 32):
         for _ in range(gradient_steps):
@@ -132,5 +168,5 @@ class CustomDQN(OffPolicyAlgorithm):
             self.update_target_network()
 
         # Adjust exploration rate
-        self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
+        self._adjust_exploration_rate()
 
