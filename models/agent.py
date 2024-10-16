@@ -1,10 +1,8 @@
-import torch
 from grid2op.Agent import BaseAgent
-
 
 class RLAgent(BaseAgent):
     def __init__(self, model, gym_env):
-        super(RLAgent, self).__init__(action_space=gym_env.action_space)
+        super().__init__(action_space=gym_env.action_space)
         self.gym_env = gym_env
         self.model = model
 

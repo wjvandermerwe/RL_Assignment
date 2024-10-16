@@ -1,5 +1,6 @@
 import torch
 from grid2op.Episode import EpisodeReplay
+from stable_baselines3.common.buffers import ReplayBuffer
 
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.ppo import MultiInputPolicy, MlpPolicy
@@ -10,7 +11,10 @@ from env.env import Gym2OpEnv  # Assuming the environment setup code is in env_s
 from grid2op.Runner import Runner
 
 from models.agent import RLAgent
-from models.dqn_model import CustomDQN
+from models.dqn_model import BaseDQN, DQNPolicy
+from models.iteration_1.dqn_model import DoubleDQN
+from models.iteration_2.dqn_model import DuelingDQN
+from models.iteration_3.dqn_model import PER_DQN
 
 import logging
 
@@ -30,33 +34,39 @@ def main():
     env = Gym2OpEnv()
 
     logging.basicConfig(level=logging.DEBUG)
-    # Step 2: Set up the observation and action spaces
+
+
     # observation_space = env_wrapper.observation_space
     # action_space_size = env_wrapper.action_space
     # flattened_env = FlattenObservation(env)
     # vec_env = DummyVecEnv([lambda: flattened_env])
-    # Step 3: Create the DQN model
-    # dqn_model = CustomDQN(
-    #     policy=MultiInputPolicy,
-    #     env=env,
-    #     learning_rate=1e-3,
-    #     buffer_size=10000,
-    #     tau=0.005,
-    #     gamma=0.99,
-    # )
 
-    ppo = CustomPPO(policy=MlpPolicy,
-                   env=env,
-                   ent_coef = 0.0,
-                   vf_coef= 0.5,
-                   gae_lambda = 0.95,
-                   n_steps = 2048,
-                   max_grad_norm=0.5,
-                   use_sde = False,
-                   sde_sample_freq=-1)
+    # Step 3: Create the DQN model
+    args = {
+        "env" : env,
+        "learning_rate" : 1e-3,
+        "buffer_size" : 10000,
+        "tau" : 0.005,
+        "gamma" : 0.99
+    }
+
+    dqn_model = BaseDQN(policy=DQNPolicy,replay_buffer_class=ReplayBuffer,**args)
+    dqn_model = DoubleDQN(**args)
+    dqn_model = DuelingDQN(**args)
+    dqn_model = PER_DQN(**args)
+
+    # ppo = CustomPPO(policy=MlpPolicy,
+    #                env=env,
+    #                ent_coef = 0.0,
+    #                vf_coef= 0.5,
+    #                gae_lambda = 0.95,
+    #                n_steps = 2048,
+    #                max_grad_norm=0.5,
+    #                use_sde = False,
+    #                sde_sample_freq=-1)
 
     # Step 4: Create the Grid2Op-compatible DQN agent
-    agent = RLAgent(model=ppo, gym_env=env)
+    agent = RLAgent(model=dqn_model, gym_env=env)
     params =  env._g2op_env.get_params_for_runner()
     del params["verbose"]
     # Step 5: Set up the Runner
