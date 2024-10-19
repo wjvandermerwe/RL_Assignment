@@ -1,4 +1,4 @@
-from typing import Optional, Generator, Union, Dict, Type, Any, ClassVar
+from typing import Optional, Union, Dict, Type, Any, ClassVar
 
 import numpy as np
 import torch
@@ -7,37 +7,17 @@ from stable_baselines3.common.buffers import BaseBuffer, RolloutBuffer
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy, ActorCriticPolicy
 from stable_baselines3.common.torch_layers import create_mlp
-from stable_baselines3.common.type_aliases import RolloutBufferSamples, GymEnv, Schedule
+from stable_baselines3.common.type_aliases import GymEnv, Schedule
 from stable_baselines3.common.utils import get_schedule_fn, explained_variance
-from stable_baselines3.common.vec_env import VecNormalize
 from torch import nn
 import torch.nn.functional as F
 
-class RolloutBuffer(BaseBuffer):
+class ComputeAdvantageRolloutBuffer(RolloutBuffer):
     def __init__(
             self,
-            buffer_size: int,
-            observation_space,
-            action_space,
-            device: str = "cpu",
-            gamma: float = 0.99,
-            gae_lambda: float = 0.95,
-            n_envs: int = 1,
+            **kwargs
     ):
-        super().__init__(
-            buffer_size, observation_space, action_space, device, n_envs=n_envs
-        )
-        self.gamma = gamma
-        self.gae_lambda = gae_lambda
-        self.observations = np.zeros((buffer_size, n_envs, *self.obs_shape), dtype=np.float32)
-        self.actions = np.zeros((buffer_size, n_envs, self.action_dim), dtype=np.float32)
-        self.rewards = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.values = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.returns = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.log_probs = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.advantages = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.episode_starts = np.zeros((buffer_size, n_envs), dtype=np.float32)
-        self.generator_ready = False
+        super().__init__(**kwargs)
 
     def compute_returns_and_advantage(self, last_values: torch.Tensor, dones: np.ndarray) -> None:
         """
@@ -51,8 +31,9 @@ class RolloutBuffer(BaseBuffer):
         """
         last_values = last_values.clone().cpu().numpy().flatten()
         last_gae_lam = 0
-        for step in reversed(range(self.buffer_size)):
-            if step == self.buffer_size - 1:
+        T = self.buffer_size  # Truncation length, equivalent to trajectory segment length
+        for step in reversed(range(T)):
+            if step == T - 1:
                 next_non_terminal = 1.0 - dones.astype(np.float32)
                 next_values = last_values
             else:
@@ -63,41 +44,10 @@ class RolloutBuffer(BaseBuffer):
             self.advantages[step] = last_gae_lam
         self.returns = self.advantages + self.values
 
-    def get(self, batch_size: Optional[int] = None) -> Generator[RolloutBufferSamples, None, None]:
-        assert self.full, "Buffer not full"
-        indices = np.random.permutation(self.buffer_size * self.n_envs)
-        if not self.generator_ready:
-            _tensor_names = [
-                "observations",
-                "actions",
-                "values",
-                "log_probs",
-                "advantages",
-                "returns",
-            ]
-            for tensor in _tensor_names:
-                self.__dict__[tensor] = self.swap_and_flatten(self.__dict__[tensor])
-            self.generator_ready = True
-        if batch_size is None:
-            batch_size = self.buffer_size * self.n_envs
-        start_idx = 0
-        while start_idx < self.buffer_size * self.n_envs:
-            yield self._get_samples(indices[start_idx: start_idx + batch_size])
-            start_idx += batch_size
-
-    def _get_samples(self, batch_inds: np.ndarray, env: Optional[VecNormalize] = None) -> RolloutBufferSamples:
-        data = (
-            self.observations[batch_inds],
-            self.actions[batch_inds],
-            self.values[batch_inds].flatten(),
-            self.log_probs[batch_inds].flatten(),
-            self.advantages[batch_inds].flatten(),
-            self.returns[batch_inds].flatten(),
-        )
-        return RolloutBufferSamples(*tuple(map(self.to_torch, data)))
 
 
-class CustomActorCriticPolicy(BasePolicy):
+
+class ActorCriticPolicy(BasePolicy):
     """
     Custom Actor-Critic Policy for PPO with simplified structure.
 
@@ -121,7 +71,7 @@ class CustomActorCriticPolicy(BasePolicy):
         optimizer_class: Type[torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
     ):
-        super(CustomActorCriticPolicy, self).__init__(
+        super().__init__(
             observation_space,
             action_space,
             features_extractor_class=None,
@@ -193,15 +143,11 @@ class CustomActorCriticPolicy(BasePolicy):
         return values, log_prob, entropy
 
 
-class SimplifiedPPO(OnPolicyAlgorithm):
+class BasePPO(OnPolicyAlgorithm):
     """
     Simplified PPO implementation that removes additional optimizations.
     Retains the core PPO features: clipped surrogate objective and GAE.
     """
-
-    policy_aliases: ClassVar[Dict[str, Type[BasePolicy]]] = {
-        "MlpPolicy": ActorCriticPolicy,
-    }
 
     def __init__(
             self,

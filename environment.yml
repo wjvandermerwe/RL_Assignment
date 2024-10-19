@@ -5,8 +5,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.12
+  - python=3.10
   - numpy
+  - scipy
+  - pandas
+  - matplotlib
   - pytorch
   - cudatoolkit=11.7
   - gymnasium
@@ -15,4 +18,5 @@ dependencies:
   - pip:
     - grid2op
     - lightsim2grid
-    - stable-baselines3
+    - stable-baselines3[extra]
+#    - "stable_baselines3[extra,tests,docs] @ git+https://github.com/DLR-RM/stable-baselines3"

@@ -51,37 +51,6 @@ class DuelingQNetwork(BasePolicy):
         q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
         return q_values
 
-
-class DuelingDQNPolicy(DQNPolicy):
-    """
-    Dueling DQN Policy that modifies the Q-network to use the Dueling architecture.
-    Inherits from the base DQNPolicy.
-    """
-
-    def __init__(
-        self,
-        observation_space,
-        action_space,
-        lr_schedule,
-        net_arch: Optional[List[int]] = None,
-        activation_fn: Type[nn.Module] = nn.ReLU,
-
-    ) -> None:
-        # Initialize base DQNPolicy
-        super().__init__(
-            observation_space,
-            action_space,
-            lr_schedule,
-            net_arch=net_arch,
-            activation_fn=activation_fn,
-        )
-
-    def make_q_net(self) -> DuelingQNetwork:
-        """
-        Creates the Q-Network using the Dueling architecture.
-        """
-        return DuelingQNetwork(**self.net_args).to(self.device)
-
 class DuelingDQN(BaseDQN):
     """
     A custom Dueling DQN agent that extends the CustomDQN.
@@ -89,7 +58,7 @@ class DuelingDQN(BaseDQN):
     """
     def __init__(self, **kwargs):
         super().__init__(
-            policy=DuelingDQNPolicy,
+            policy=DuelingQNetwork,
             replay_buffer_class=ReplayBuffer,
             **kwargs
         )

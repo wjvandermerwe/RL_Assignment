@@ -1,0 +1,496 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Research project proposal template
+% Based on:
+%
+% LaTeX Template
+% Version 2.5 (27/8/17)
+%
+% This template was downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Version 2.x major modifications by: 
+% Helen Robertson
+%
+% With thanks to:
+% Matthew Woolway and Terence Van Zyl for help with coding and content.
+%
+% This template is based on a template by:
+% Steve Gunn (http://users.ecs.soton.ac.uk/srg/softwaretools/document/templates/)
+% Sunil Patel (http://www.sunilpatel.co.uk/thesis-template/)
+%
+% Template license:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+% This template has been constructed in accordance with the requirements and conventions of the School of Computer Science and Applied Mathematics and of the Faculty of Science at the University of the Witwatersrand.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[
+12pt, % The default document font size, options: 10pt, 11pt, 12pt
+oneside, % Two side (alternating margins) for binding by default, uncomment to switch to one side
+english, % ngerman for German
+onehalfspacing, % One-and-a-half line spacing, alternatives: singlespacing or doublespacing
+%draft, % Uncomment to enable draft mode (no pictures, no links, overfull hboxes indicated)
+nolistspacing, % If the document is onehalfspacing or doublespacing, uncomment this to set spacing in lists to single
+liststotoc, % Uncomment to add the list of figures/tables/etc to the table of contents
+%toctotoc, % Uncomment to add the main table of contents to the table of contents
+%parskip, % Uncomment to add space between paragraphs
+%nohyperref, % Uncomment to not load the hyperref package
+headsepline, % Uncomment to get a line under the header
+%chapterinoneline, % Uncomment to place the chapter title next to the number on one line
+%consistentlayout, % Uncomment to change the layout of the declaration, abstract and acknowledgements pages to match the default layout
+]{ProposalAndThesis} % The class file specifying the document structure
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+
+\usepackage{mathpazo} % Use the Palatino font by default
+
+\usepackage[backend=bibtex,style=numeric,natbib=true]{biblatex} % Use the bibtex backend with the numeric citation style
+
+\addbibresource{example.bib} % The filename of the bibliography
+
+\usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+
+\usepackage[cleanlook, english]{isodate} % Required for UK date formatting
+
+\usepackage{fancybox} % Required for boxed text sections
+\usepackage{xcolor} % Required for coloured text
+
+\usepackage{pgfgantt}
+
+\definecolor{ShadowColor}{RGB}{0,103,165} % Required for coloured shadow in boxed text sections
+\makeatletter
+\newcommand\Cshadowbox{\VerbBox\@Cshadowbox}
+\def\@Cshadowbox#1{%
+	\setbox\@fancybox\hbox{\fbox{#1}}%
+	\leavevmode\vbox{%
+		\offinterlineskip
+		\dimen@=\shadowsize
+		\advance\dimen@ .5\fboxrule
+		\hbox{\copy\@fancybox\kern.5\fboxrule\lower\shadowsize\hbox{%
+				\color{ShadowColor}\vrule \@height\ht\@fancybox \@depth\dp\@fancybox \@width\dimen@}}%
+		\vskip\dimexpr-\dimen@+0.5\fboxrule\relax
+		\moveright\shadowsize\vbox{%
+			\color{ShadowColor}\hrule \@width\wd\@fancybox \@height\dimen@}}}
+\makeatother
+
+%----------------------------------------------------------------------------------------
+%	MARGIN SETTINGS
+%----------------------------------------------------------------------------------------
+
+\geometry{
+	paper=a4paper, % Change to letterpaper for US letter
+	inner=2.8cm, % Inner margin
+	outer=2.8cm, % Outer margin
+	bindingoffset=0.0cm, % Binding offset
+	top=2.8cm, % Top margin
+	bottom=2.8cm, % Bottom margin
+	%showframe, % Uncomment to show how the type block is set on the page
+}
+
+%----------------------------------------------------------------------------------------
+%	THESIS INFORMATION
+%----------------------------------------------------------------------------------------
+
+\thesistitle{COMS7071A Lab3: DQN Summary} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
+% \supervisor{Name of Supervisor Here} % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
+% \cosupervisor{Name of Co-supervisor Here (or Delete)} % Your co-supervisor's name, this is used in the title page, print it elsewhere with \cosupname
+%\examiner{} % Your examiner's name, this is not currently used anywhere in the template, print it elsewhere with \examname
+% \degree{Degree Name Here} % Your degree name, this is used in the title page and abstract, print it elsewhere with \degreename
+\author{Willem Van Der Merwe 2914429} % Your name, this is used in the title page and abstract, print it elsewhere with \authorname
+%\addresses{} % Your address, this is not currently used anywhere in the template, print it elsewhere with \addressname
+%\subject{} % Your subject area, this is not currently used anywhere in the template, print it elsewhere with \subjectname
+%\keywords{} % Keywords for your thesis, this is not currently used anywhere in the template, print it elsewhere with \keywordnames
+\university{University of the Witwatersrand, Johannesburg} % Your university's name, this is used in the title page and abstract, print it elsewhere with \univname
+% \department{Name of School or Department Here} % Your department's name, this is used in the title page and abstract, print it elsewhere with \deptname
+%\group{\href{http://research group.com}{Research Group Name}} % Your research group's name and URL, this is not currently used anywhere in the template, print it elsewhere with \groupname
+%\faculty{\href{http://faculty.university.com}{Faculty Name}} % Your faculty's name and URL, this is not currently used anywhere in the template, print it elsewhere with \facname
+
+\def\keywordnames{Appendices; Chapters; Figures; example.bib; main.pdf; main.tex; main.bbl; main.aux; main.blg; main.lof; main.log; main.lot; main.out; MastersDoctoralThesis.cls}
+
+\newcommand{\keyword}[1]{\textbf{#1}}
+\newcommand{\tabhead}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{\bfseries#1}}
+\newcommand{\option}[1]{\texttt{\itshape#1}}
+
+
+
+\AtBeginDocument{
+\hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
+\hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
+\hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
+}
+
+\begin{document}
+
+\frontmatter % Use roman page numbering style (i, ii, iii, iv...) for the pre-content pages
+
+\pagestyle{plain} % Default to the plain heading style until the thesis style is called for the body content
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\begin{titlepage}
+\begin{center}
+
+{\huge \bfseries \ttitle}\par\vspace{0.4cm} % Thesis title
+\HRule\par\vspace{1.5cm}
+\authorname\par\vspace{1cm}
+% \emph{Supervisor(s):}\par
+% {\supname}\par % Name of supervisor
+% {\cosupname} % Name of co-supervisor
+\par\vspace{0.5cm}
+
+\includegraphics[width=80mm]{Figures/logoWitsstackedcolourtransparent.png} % University crest
+\vfill
+
+% A research proposal submitted in partial fulfillment of the requirements for the degree of \par\vspace{0.3cm}
+% in the\par\vspace{0.4cm}
+% \deptname\par\vspace{0.1cm} % Name of department
+\univname\par\vspace{0.4cm} % Name of university
+\cleanlookdateon
+\today % Date
+
+\end{center}
+
+\end{titlepage}
+
+%---------------------------------------------------------------------------------------
+%	USING THIS TEMPLATE
+%---------------------------------------------------------------------------------------
+
+% \par\vspace{0.5cm}
+% \noindent \Cshadowbox{
+% 	\begin{minipage}{15cm}
+% 		\medskip
+% 		\color[rgb]{0.0,0.4,0.65} 
+% 		\begin{center} 
+% 			\medskip \textbf{Using this template} \par 
+% 			\end{center}
+% 			\medskip The template below has been constructed in line with the Faculty of Science requirements as well as the conventions of the School. Guidance on each section can be found in the blue boxes at the start of the section. Note that conventions and preferences for structuring a research proposal can vary from discipline to discipline and supervisor to supervisor. Both the template and the guidance on the different sections are suggestions for structuring the proposal. If your supervisor has a different preferred convention or template, it is recommended that you consult with them regarding the differences. \par \medskip
+% 			Further details on using the template can be found in Appendix B. \par \medskip
+% 			You should ensure that you either delete or comment out the blue boxes before submission of the proposal. \par
+% 		\medskip 
+% \end{minipage}}\\ 
+
+%----------------------------------------------------------------------------------------
+%	DECLARATION PAGE
+%----------------------------------------------------------------------------------------
+
+% \begin{declaration}
+% \addchaptertocentry{\authorshipname} % Add the declaration to the table of contents
+% \vspace{0.5cm}
+% \noindent I, \authorname, declare that this proposal is my own, unaided work. It is being submitted for the degree of {\degreename} at the \univname. It has not been submitted for any degree or examination at any other university.
+
+% \par\vspace{2cm}
+% \begin{flushright}
+% \includegraphics[width=30mm]{Figures/sign.png}\par 
+% \authorname\par\vspace{0.1cm}
+% \today
+% \end{flushright}
+
+% \par\vspace{0.5cm}
+% \noindent \Cshadowbox{
+% 	\begin{minipage}{15cm}
+% 		\medskip
+% 		\color[rgb]{0.0,0.4,0.65} 
+% 		\medskip The declaration is an important formal requirement. Ensure that you upload an
+% 		image of your signature and that you change the file name in the main.tex file to include it.
+% 		\medskip 
+% \end{minipage}}\\ 
+
+% \end{declaration}
+% \vfill
+\pagebreak
+
+%----------------------------------------------------------------------------------------
+%	QUOTATION PAGE
+%----------------------------------------------------------------------------------------
+
+%\vspace*{0.2\textheight}
+
+%\noindent\enquote{\itshape Thanks to my solid academic training, today I can write hundreds of words on virtually any topic without possessing a shred of information, which is how I got a good job in journalism.}\bigbreak
+
+%\hfill Dave Barry
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT PAGE
+%----------------------------------------------------------------------------------------
+
+% \begin{abstract}
+% \addchaptertocentry{\abstractname} % Add the abstract to the table of contents
+% \begin{quote}
+% Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam ultricies lacinia euismod. Nam tempus risus in dolor rhoncus in interdum enim tincidunt. Donec vel nunc neque. In condimentum ullamcorper quam non consequat. Fusce sagittis tempor feugiat. Fusce magna erat, molestie eu convallis ut, tempus sed arcu. Quisque molestie, ante a tincidunt ullamcorper, sapien enim dignissim lacus, in semper nibh erat lobortis purus. Integer dapibus ligula ac risus convallis pellentesque.
+% \end{quote}
+
+% \par\vspace{0.5cm}
+% \noindent \Cshadowbox{
+%     \begin{minipage}{15cm}
+%     \bigskip
+%     \color[rgb]{0.0,0.4,0.65}The abstract is a brief informative summary of the proposed research. It can be read independently and should 
+%     	\begin{itemize}
+%     		\item locate the proposed research within the background relevant to it,
+%     		\item state the research question or aim,
+%     		\item briefly describe the proposed methods for answering the question or achieving the aim, and,
+%     		\item emphasise the contribution that the proposed research will make to current research in the field.
+%     	\end{itemize}
+%     	It is recommended that your abstract is no more than 300 words.
+%     \medskip
+% 	\end{minipage}}
+
+% \end{abstract}
+
+%----------------------------------------------------------------------------------------
+%	ACKNOWLEDGEMENTS
+%----------------------------------------------------------------------------------------
+
+% \begin{acknowledgements}
+% \addchaptertocentry{\acknowledgementname} % Add the acknowledgements to the table of contents
+% \vspace{0.5cm}
+% \noindent{Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam ultricies lacinia euismod. Nam tempus risus in dolor rhoncus in interdum enim tincidunt. Donec vel nunc neque.}
+
+% \par\vspace{0.5cm}
+% \noindent \Cshadowbox{
+% 	\begin{minipage}{15cm}
+% 		\medskip
+% 		\color[rgb]{0.0,0.4,0.65} 
+% 		\medskip The acknowledgements section allows you to thank those who contributed to the
+% 		preparation of the proposal. It is usual to acknowledge supervision, financial
+% 		assistance or funders, and any special facilities provided for the research.		
+% 		\medskip 
+% \end{minipage}}\\ 
+
+
+
+% \end{acknowledgements}
+
+%----------------------------------------------------------------------------------------
+%	LIST OF CONTENTS/FIGURES/TABLES PAGES
+%----------------------------------------------------------------------------------------
+
+% \tableofcontents % Prints the main table of contents
+
+% \listoffigures % Prints the list of figures
+
+% \listoftables % Prints the list of tables
+
+%----------------------------------------------------------------------------------------
+%	ABBREVIATIONS
+%----------------------------------------------------------------------------------------
+
+%\begin{abbreviations}{ll} % Include a list of abbreviations (a table of two columns)
+
+%\textbf{LAH} & \textbf{L}ist \textbf{A}bbreviations \textbf{H}ere\\
+%\textbf{WSF} & \textbf{W}hat (it) \textbf{S}tands \textbf{F}or\\
+
+%\end{abbreviations}
+
+%----------------------------------------------------------------------------------------
+%	PHYSICAL CONSTANTS/OTHER DEFINITIONS
+%----------------------------------------------------------------------------------------
+
+%\begin{constants}{lr@{${}={}$}l} % The list of physical constants is a three column table
+
+% The \SI{}{} command is provided by the siunitx package, see its documentation for instructions on how to use it
+
+%Speed of Light & $c_{0}$ & \SI{2.99792458e8}{\meter\per\second} (exact)\\
+%Constant Name & $Symbol$ & $Constant Value$ with units\\
+
+%\end{constants}
+
+%----------------------------------------------------------------------------------------
+%	SYMBOLS
+%----------------------------------------------------------------------------------------
+
+%\begin{symbols}{lll} % Include a list of Symbols (a three column table)
+
+%$a$ & distance & \si{\meter} \\
+%$P$ & power & \si{\watt} (\si{\joule\per\second}) \\
+%Symbol & Name & Unit \\
+
+%\addlinespace % Gap to separate the Roman symbols from the Greek
+
+%$\omega$ & angular frequency & \si{\radian} \\
+
+%\end{symbols}
+
+%----------------------------------------------------------------------------------------
+%	DEDICATION
+%----------------------------------------------------------------------------------------
+
+%\dedicatory{For/Dedicated to/To my\ldots} 
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - CHAPTERS
+%----------------------------------------------------------------------------------------
+
+\mainmatter % Begin numeric (1,2,3...) page numbering
+
+%\pagestyle{thesis} % Return the page headers back to the "thesis" style
+
+% Include the chapters of the thesis as separate files from the Chapters folder
+% Uncomment the lines as you write the chapters
+
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - APPENDICES
+%----------------------------------------------------------------------------------------
+
+% \appendix % Cue to tell LaTeX that the following "chapters" are Appendices
+
+% Include the appendices of the thesis as separate files from the Appendices folder
+% Uncomment the lines as you write the Appendices
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+% \printbibliography[heading=bibintoc]
+
+%----------------------------------------------------------------------------------------
+
+\chapter{Training Process}
+The training process follows the loop as shown in Figure 3:
+
+\begin{enumerate}
+    \item \textbf{Replay Memory:} The agent stores transitions (state, action, reward, next state) in a replay buffer. This memory allows the agent to break correlations between sequential states by sampling random batches during the optimization step.
+    \item \textbf{Policy Network:} The policy network is the Q-network that chooses actions based on the current state of the environment. Actions can be selected using an epsilon-greedy strategy to balance exploration and exploitation.
+    \item \textbf{Target Network:} The target network is a delayed copy of the policy network, updated periodically. This helps stabilize training by providing fixed targets during the optimization process.
+    \item \textbf{Optimization:} At each step, a random batch of transitions is sampled from the replay memory. The policy network is optimized by minimizing the loss between predicted Q-values and target Q-values obtained from the target network.
+    \item \textbf{Target Network Update:} Occasionally, the target network is updated to the current policy network to maintain stable learning.
+\end{enumerate}
+
+The general training loop follows these steps:
+\begin{itemize}
+    \item Choose random or policy action based on the current state.
+    \item Sample the environment based on the action.
+    \item Record the transition (state, action, reward, next state) in replay memory.
+    \item Optimize the policy network using a random batch from the replay memory.
+    \item Occasionally update the target network with the policy network.
+\end{itemize}
+
+\chapter{Q-Network Architecture}
+The Q-Network is a neural network designed to approximate the Q-value function, \( Q(s, a) \). In this implementation, I adopt an architecture similar to the one described in the original DQN paper, tailored for processing image inputs from the Atari Pong environment. Below is a detailed explanation of its architecture:
+
+\paragraph{Input Layer:}
+I apply several preprocessing steps and wrappers to the environment which processes input from the Atari environemnt, which is the current state \( s_t \), which consists of a stack of recent frames. After preprocessing, the input state \( s_t \) is a tensor with shape \( [C, H, W] \), where \( C = 5 \) (number of stacked frames), and \( H = W = 84 \).
+\begin{itemize}
+    \item \textbf{NoopResetEnv:} Introduces a random number of no-op actions at the beginning to randomize initial conditions.
+    \item \textbf{MaxAndSkipEnv:} Skips frames to reduce computation and takes the maximum of consecutive frames to handle flickering.
+    \item \textbf{EpisodicLifeEnv:} Treats loss of lives as terminal states to provide more frequent learning signals.
+    \item \textbf{FireResetEnv:} Ensures the game is properly initialized if a 'FIRE' action is required to start.
+    \item \textbf{ClipRewardEnv:} Clamps rewards to the range \([-1, 1]\) to stabilize training.
+    \item \textbf{WarpFrame:} Converts frames to grayscale and resizes them to \(84 \times 84\) pixels to reduce computational complexity.
+    \item \textbf{PyTorchFrame:} Transposes frame dimensions to match PyTorch's \( C \times H \times W \) format.
+    \item \textbf{FrameStack:} Stacks the last \( k = 5 \) frames along the channel dimension to capture motion.
+\end{itemize}
+
+
+\paragraph{Hidden Layers:} which extract spatial and temporal features from the stacked frames, allowing the network to understand motion and object positions in the game.
+\begin{itemize}
+    \item \textbf{Convolutional Layers:}
+    \begin{itemize}
+        \item \textbf{First Convolutional Layer:}
+        \begin{itemize}
+            \item \textbf{Input Channels:} 5
+            \item \textbf{Output Channels:} 32
+            \item \textbf{Kernel Size:} \(8 \times 8\)
+            \item \textbf{Stride:} 4
+            \item \textbf{Activation:} ReLU
+        \end{itemize}
+        \item \textbf{Second Convolutional Layer:}
+        \begin{itemize}
+            \item \textbf{Input Channels:} 32
+            \item \textbf{Output Channels:} 64
+            \item \textbf{Kernel Size:} \(4 \times 4\)
+            \item \textbf{Stride:} 2
+            \item \textbf{Activation:} ReLU
+        \end{itemize}
+        \item \textbf{Third Convolutional Layer:}
+        \begin{itemize}
+            \item \textbf{Input Channels:} 64
+            \item \textbf{Output Channels:} 64
+            \item \textbf{Kernel Size:} \(3 \times 3\)
+            \item \textbf{Stride:} 1
+            \item \textbf{Activation:} ReLU
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Flattening:} The output of the final convolutional layer is flattened into a 1D vector to be fed into the fully connected layers.
+    \item \textbf{Fully Connected Layers:} The fully connected layer serves to combine the features extracted by the convolutional layers and to learn higher-level representations. First Fully Connected Layer, has a input size which is calculated based on the output of the convolutional layers. It has a output size of 512 neurons which is then activated with ReLU.
+\end{itemize}
+
+\paragraph{Output Layer:} 
+\begin{itemize}
+    \item \textbf{Action-Value Outputs:} Each output neuron corresponds to the Q-value \( Q(s_t, a) \) for a specific action \( a \). No activation function is applied to the output layer since Q-values are real numbers representing expected rewards. Ouput size is 6 discrete actions.
+    \item \textbf{Action Selection:} The agent selects the action \( a_t \) by choosing the action with the highest Q-value: \( a_t = \arg\max_a Q(s_t, a) \), unless exploring.
+
+\end{itemize}
+
+\paragraph{Loss Function:}
+\begin{itemize}
+    \item The network is trained to minimize the Temporal Difference (TD) error using the Mean Squared Error (MSE) loss.
+    \item For a minibatch of transitions sampled from the replay buffer, the loss function is computed as:
+    \[
+    L(\theta) = \frac{1}{N} \sum_{i=1}^{N} \left( r_i + \gamma \max_{a'} Q_{\text{target}}(s_{i+1}, a'; \theta^-) - Q(s_i, a_i; \theta) \right)^2
+    \]
+    where:
+    \begin{itemize}
+        \item \( N \) is the batch size.
+        \item \( r_i \) is the reward received after taking action \( a_i \) in state \( s_i \).
+        \item \( \gamma \) is the discount factor.
+        \item \( Q_{\text{target}}(s_{i+1}, a'; \theta^-) \) is the Q-value from the target network for the next state \( s_{i+1} \).
+        \item \( Q(s_i, a_i; \theta) \) is the predicted Q-value from the policy network for the current state-action pair.
+        \item \( \theta \) are the weights of the policy network, and \( \theta^- \) are the weights of the target network.
+    \end{itemize}
+    \item The network weights \( \theta \) are updated by minimizing this loss using the Adam optimizer with the specified learning rate.
+\end{itemize}
+
+\paragraph{Optimization:} Gradients are computed via backpropagation, and the optimizer adjusts the weights accordingly.
+
+\paragraph{Target Network:}
+A separate target network \( Q_{\text{target}} \) is maintained to provide stable targets during training. The weights \( \theta^- \) of the target network are periodically updated from the policy network \( \theta \) every specified number of steps (e.g., every 1,000 steps). This decoupling helps mitigate oscillations and divergence during training.
+
+\paragraph{Epsilon-Greedy Exploration:}
+The agent employs an epsilon-greedy strategy for action selection, with probability \( \epsilon \), a random action is selected (exploration), or with probability \( 1 - \epsilon \), the action with the highest Q-value is selected (exploitation).
+
+\paragraph{Epsilon Decay:} Epsilon \( \epsilon \) is decayed linearly from an initial value \( \epsilon_{\text{start}} = 1.0 \) to a minimum value \( \epsilon_{\text{end}} = 0.01 \) over a fraction of the total training steps. This strategy allows the agent to explore sufficiently while gradually focusing on exploiting learned behaviors.
+The decay is computed as:
+\[
+\epsilon_t = \epsilon_{\text{start}} + \left( \frac{t}{\epsilon_{\text{decay\_steps}}} \right) (\epsilon_{\text{end}} - \epsilon_{\text{start}})
+\]
+where \( t \) is the current timestep and \( \epsilon_{\text{decay\_steps}} \) is the total number of steps over which epsilon is decayed.
+
+
+
+
+
+
+\chapter{Hyperparameters}
+The performance of the DQN agent heavily depends on the choice of hyperparameters. Below is a detailed list of the hyperparameters used in this implementation, along with their descriptions:
+
+\begin{itemize}
+    \item \textbf{Seed:} 42, Used to initialize random number generators for reproducibility.
+    \item \textbf{Replay Buffer Size:} 5,000 transitions, The maximum number of past transitions stored in the replay buffer. A smaller buffer size speeds up training but may limit the diversity of experiences.
+    \item \textbf{Batch Size:} 256 transitions, the number of transitions sampled from the replay buffer for each training update. A larger batch size provides more stable gradient estimates.
+    \item \textbf{Learning Rate:} 0.0001, The step size used by the Adam optimizer to update the network weights. A lower learning rate helps in stable convergence.
+    \item \textbf{Discount Factor (\( \gamma \)):} 0.99, Balances immediate and future rewards in the Q-value updates. A value close to 1.0 considers future rewards more heavily.
+    \item \textbf{Number of Steps:} 1,000,000, the total number of training steps.
+    \item \textbf{Learning Starts:} 10,000 steps, the number of initial steps where the agent only collects experiences without updating the network. Allows the replay buffer to fill up before training begins.
+    \item \textbf{Learning Frequency:} Every 5 steps, specifies that the network is updated every 5 steps. Frequent updates can accelerate learning.
+    \item \textbf{Target Network Update Frequency:} 1,000 steps, the frequency (in steps) at which the target network \( \theta^- \) is updated with the policy network weights \( \theta \). Regular updates help stabilize training.
+    \item \textbf{Exploration Rate (\( \epsilon \)) Start Value:} 1.0, the initial probability of selecting a random action.
+    \item \textbf{Exploration Rate (\( \epsilon \)) End Value:} 0.01, the minimum probability of selecting a random action after decay.
+    \item \textbf{Exploration Fraction:} 0.1, the fraction of total training steps over which \( \epsilon \) is decayed from the start value to the end value. For example, if the total steps are 1,000,000, then \( \epsilon \) is decayed over the first 100,000 steps.
+    \item \textbf{Print Frequency:} Every 10 episodes, how often training statistics are printed to monitor progress.
+    \item \textbf{Optimizer:} Adam, the optimization algorithm used for training the network. Chosen for its adaptive learning rate properties.
+    \item \textbf{Frame Stack Size (\( k \)):} 5, the number of frames stacked together to form the state input. Provides temporal context to the agent.
+    \item \textbf{Learning Rate Scheduler:} Not used, A constant learning rate is maintained throughout training.
+\end{itemize}
+\end{document}  
