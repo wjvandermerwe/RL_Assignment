@@ -1,15 +1,18 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from typing import Optional, Union, Dict, Type
+from typing import Optional, Union, Dict, Type, Any
+from gymnasium import spaces
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.type_aliases import GymEnv, Schedule
 from stable_baselines3.common.utils import get_schedule_fn, explained_variance
 
+from models.ppo_model import BasePPO
 
-class TrulyProximalPPO(OnPolicyAlgorithm):
+
+class TrulyProximalPPO(BasePPO):
     """
     Truly Proximal Policy Optimization (TPPO) implementation.
     This class extends PPO with adaptive clipping and KL divergence monitoring to ensure truly proximal updates.
@@ -19,56 +22,27 @@ class TrulyProximalPPO(OnPolicyAlgorithm):
             self,
             policy: Union[str, Type[ActorCriticPolicy]],
             env: Union[GymEnv, str],
-            learning_rate: Union[float, Schedule] = 3e-4,
-            n_steps: int = 2048,
             batch_size: int = 64,
             n_epochs: int = 10,
-            gamma: float = 0.99,
-            gae_lambda: float = 0.95,
             clip_range: Union[float, Schedule] = 0.2,
             clip_range_vf: Union[None, float, Schedule] = None,
             normalize_advantage: bool = True,
-            vf_coef: float = 0.5,
-            max_grad_norm: Optional[float] = 0.5,
             target_kl: Optional[float] = 0.01,
-            rollout_buffer_class: Optional[Type[RolloutBuffer]] = None,
-            rollout_buffer_kwargs: Optional[Dict[str, Any]] = None,
-            tensorboard_log: Optional[str] = None,
-            policy_kwargs: Optional[Dict[str, Any]] = None,
-            verbose: int = 0,
-            seed: Optional[int] = None,
-            device: Union[torch.device, str] = "auto",
             _init_setup_model: bool = True,
+            **kwargs,
     ):
-        super(TrulyProximalPPO, self).__init__(
-            policy,
-            env,
-            learning_rate=learning_rate,
-            n_steps=n_steps,
-            gamma=gamma,
-            gae_lambda=gae_lambda,
-            vf_coef=vf_coef,
-            max_grad_norm=max_grad_norm,
-            rollout_buffer_class=rollout_buffer_class,
-            rollout_buffer_kwargs=rollout_buffer_kwargs,
-            tensorboard_log=tensorboard_log,
-            policy_kwargs=policy_kwargs,
-            verbose=verbose,
-            device=device,
-            seed=seed,
-            _init_setup_model=False,
-            supported_action_spaces=(spaces.Box, spaces.Discrete, spaces.MultiDiscrete, spaces.MultiBinary),
-        )
-
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.clip_range = clip_range
         self.clip_range_vf = clip_range_vf
         self.normalize_advantage = normalize_advantage
         self.target_kl = target_kl
-
-        if _init_setup_model:
-            self._setup_model()
+        super(TrulyProximalPPO, self).__init__(
+            policy,
+            env,
+            **kwargs,
+            supported_action_spaces=(spaces.Box, spaces.Discrete, spaces.MultiDiscrete, spaces.MultiBinary),
+        )
 
     def _setup_model(self) -> None:
         super()._setup_model()

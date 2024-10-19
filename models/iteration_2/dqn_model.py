@@ -1,14 +1,18 @@
-from typing import  Optional, Type,  List
 
-import torch
 from stable_baselines3.common.buffers import ReplayBuffer
-from stable_baselines3.common.policies import BasePolicy
+from stable_baselines3.common.torch_layers import create_mlp
+
 from torch import nn
-from models.dqn_model import BaseDQN, DQNPolicy
+from models.dqn_model import BaseDQN
 import torch.nn.functional as F
 
-class DuelingQNetwork(BasePolicy):
-    def __init__(self, obs_shape, observation_space, action_space, net_arch=None, activation_fn=nn.ReLU):
+from models.iteration_1.dqn_model import DoubleDQNPolicy, DoubleDQN
+
+
+class DuelingQNetwork(DoubleDQNPolicy):
+    def __init__(self, observation_space, action_space,
+                 lr_schedule,
+                 net_arch=None, activation_fn=nn.ReLU):
         """
         Q-Value Network for Dueling DQN.
 
@@ -17,25 +21,17 @@ class DuelingQNetwork(BasePolicy):
         :param net_arch: Network architecture as a list of layer sizes.
         :param activation_fn: Activation function to use between layers.
         """
-        super().__init__(observation_space=observation_space, action_space=action_space)
+        super().__init__(observation_space=observation_space, action_space=action_space, lr_schedule=lr_schedule)
 
-        # If no custom architecture is provided, use default [64, 64]
-        if net_arch is None:
-            net_arch = [64, 64]
-
-        self.obs_shape = obs_shape
+        # self.obs_shape = obs_shape
         self.action_dim = action_space.n
-        self.net_arch = net_arch
         self.activation_fn = activation_fn
-
+        input_dim = observation_space.shape[0]
+        net_arch=[64,64]
         # Shared layers for both value and advantage streams
-        layers = []
-        input_dim = obs_shape[0]
-        for layer_size in net_arch:
-            layers.append(nn.Linear(input_dim, layer_size))
-            layers.append(activation_fn())
-            input_dim = layer_size
-        self.shared_layers = nn.Sequential(*layers)
+        # input_dim = obs_shape[0]
+        shared_layers = create_mlp(input_dim, net_arch[-1], net_arch, activation_fn=activation_fn)
+        self.shared_layers = nn.Sequential(*shared_layers)
 
         # Value stream
         self.value_layer = nn.Linear(input_dim, 1)
@@ -51,14 +47,12 @@ class DuelingQNetwork(BasePolicy):
         q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
         return q_values
 
-class DuelingDQN(BaseDQN):
+class DuelingDQN(DoubleDQN):
     """
     A custom Dueling DQN agent that extends the CustomDQN.
     Uses DuelingDQNPolicy to implement the Dueling architecture.
     """
     def __init__(self, **kwargs):
         super().__init__(
-            policy=DuelingQNetwork,
-            replay_buffer_class=ReplayBuffer,
             **kwargs
         )

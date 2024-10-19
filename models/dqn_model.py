@@ -172,7 +172,7 @@ class BaseDQN(OffPolicyAlgorithm):
         losses = []
         # Q-values for actions taken
         q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
-        self._adjust_exploration_rate()
+
         # q_values = self.policy.q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
         # Target Q-values using target network
@@ -214,6 +214,7 @@ class BaseDQN(OffPolicyAlgorithm):
     def train(self, gradient_steps: int, batch_size: int = 32):
         self.policy.set_training_mode(True)
         for _ in range(gradient_steps):
+            self._adjust_exploration_rate()
             batch = self.replay_buffer.sample(batch_size)
             loss = self.train_step(batch)
         return loss

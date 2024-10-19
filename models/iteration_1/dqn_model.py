@@ -1,10 +1,7 @@
-from typing import Optional, Type, List, Dict, Any
-
+import numpy as np
 from stable_baselines3.common.buffers import ReplayBuffer
-
 from models.dqn_model import BaseDQN, DQNPolicy
 import torch
-from torch import nn
 import torch.nn.functional as F
 
 class DoubleDQNPolicy(DQNPolicy):
@@ -18,19 +15,17 @@ class DoubleDQNPolicy(DQNPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            net_arch: Optional[List[int]] = None,
-            activation_fn: Type[nn.Module] = nn.ReLU,
+            **kwargs
     ) -> None:
         # Initialize base DQNPolicy
         super().__init__(
-            observation_space,
-            action_space,
-            lr_schedule,
-            net_arch=net_arch,
-            activation_fn=activation_fn,
+            observation_space=observation_space,
+            action_space=action_space,
+            lr_schedule=lr_schedule,
+            **kwargs
         )
 
-    def compute_double_dqn_target(self, rewards, next_states, dones):
+    def compute_double_dqn_target(self, rewards, next_states, dones, gamma):
         """
         Compute the Double DQN target values.
 
@@ -43,12 +38,13 @@ class DoubleDQNPolicy(DQNPolicy):
             # Get the best action from the current Q-network (q_net)
             next_q_values = self.q_net(next_states)
             best_actions = next_q_values.argmax(dim=1, keepdim=True)
-
             # Evaluate the value of those actions using the target network
             target_next_q_values = self.q_net_target(next_states).gather(1, best_actions).squeeze(1)
+            target_next_q_values = target_next_q_values.reshape(-1, 1)
 
             # Compute target Q-value
-            target_q_values = rewards + self.gamma * target_next_q_values * (1 - dones)
+            target_q_values = rewards + gamma * target_next_q_values * (1 - dones)
+            target_q_values = target_q_values.squeeze(1)
         return target_q_values
 
 
@@ -59,17 +55,15 @@ class DoubleDQN(BaseDQN):
     """
     def __init__(self, **kwargs):
         super().__init__(
-            policy=DoubleDQNPolicy,
-            replay_buffer_class=ReplayBuffer,
             **kwargs
         )
 
     def train_step(self, batch):
-        states, actions, rewards, next_states, dones = self._process_batch(batch)
-        q_values = self.policy.q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-
-        # double DQN Target Q-values using policy's Double DQN logic
-        target_q_values = self.policy.compute_double_dqn_target(rewards, next_states, dones)
+        losses = []
+        states, actions, next_states, dones, rewards = batch
+        q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
+        target_q_values = self.policy.compute_double_dqn_target(rewards, next_states, dones, self.gamma)
         loss = F.mse_loss(q_values, target_q_values)
         self._optimize_model(loss)
+        self.logger.record("train/loss", np.mean(losses))
         return loss.item()

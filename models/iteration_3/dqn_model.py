@@ -1,7 +1,10 @@
+import torch
 from stable_baselines3.common.buffers import ReplayBuffer
 import numpy as np
 
 from models.dqn_model import BaseDQN, DQNPolicy
+from models.iteration_2.dqn_model import DuelingDQN
+import torch.nn.functional as F
 
 
 class PrioritizedReplayBuffer(ReplayBuffer):
@@ -43,21 +46,23 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         :param beta: Importance-sampling weight exponent, used to compensate for non-uniform sampling.
         :return: Sampled batch along with importance sampling weights and indices.
         """
-        if self.size() == 0:
+        current_size = self.size()
+        if current_size == 0:
             raise ValueError("Cannot sample from an empty buffer!")
-
+        if batch_size > current_size:
+            batch_size = current_size
         # Calculate probabilities for each experience in the buffer
-        scaled_priorities = self.priorities[:self.size()] ** self.alpha
+        scaled_priorities = self.priorities[:current_size] ** self.alpha
         sampling_probabilities = scaled_priorities / scaled_priorities.sum()
 
         # Sample indices based on these probabilities
-        indices = np.random.choice(self.size(), batch_size, p=sampling_probabilities, replace=False)
+        indices = np.random.choice(current_size, batch_size, p=sampling_probabilities, replace=False)
 
         # Sample the transitions using the base buffer's internal sampling method
         batch = super()._get_samples(indices)
 
         # Calculate importance sampling weights
-        total = self.size()
+        total = current_size
         weights = (total * sampling_probabilities[indices]) ** (-beta)
         weights /= weights.max()  # Normalize weights to avoid instability
 
@@ -77,14 +82,28 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             self.priorities[idx] = max(priority, 1e-5)  # To avoid zero priority issues
         self.max_priority = max(self.max_priority, priorities.max())
 
-class PER_DQN(BaseDQN):
+class PER_DQN(DuelingDQN):
     """
     A custom Dueling DQN agent that extends the CustomDQN.
     Uses DuelingDQNPolicy to implement the Dueling architecture.
     """
     def __init__(self, **kwargs):
         super().__init__(
-            policy=DQNPolicy,
-            replay_buffer_class=PrioritizedReplayBuffer,
             **kwargs
         )
+
+    def train_step(self, batch):
+
+        states, actions, next_states, dones, rewards, indices, weights = batch
+        q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
+        target_q_values = self.policy.compute_double_dqn_target(rewards, next_states, dones, self.gamma)
+        weights = torch.tensor(weights, dtype=torch.float32).to(self.device)
+        td_errors = q_values - target_q_values
+        loss = (weights * td_errors.pow(2)).mean()
+
+        # loss = F.mse_loss(q_values, target_q_values)
+        self._optimize_model(loss)
+        new_priorities = td_errors.abs().detach().cpu().numpy()  # Priorities are the absolute TD-errors
+        self.replay_buffer.update_priorities(indices, new_priorities)
+
+        return loss.item()
