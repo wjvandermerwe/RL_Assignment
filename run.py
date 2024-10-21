@@ -27,17 +27,17 @@ def main(args):
             model = None
             dqn_net_args = {
                 "env": env,
-                "learning_rate": get_schedule_fn(1e-3),
-                "buffer_size": 1000,
+                "learning_rate": get_schedule_fn(1e-5),
+                "buffer_size": 2500,
                 "tau": 0.005,
-                "gamma": 0.90,
+                "gamma": 0.95,
                 "tensorboard_log": "tensor_board/" + model_type,
             }
             ppo_net_args = {
                 "env": env,
                 "device": "cuda",
-                "learning_rate": get_schedule_fn(1e-3),
-                "gamma": 0.80,
+                "learning_rate": get_schedule_fn(1e-5),
+                "gamma": 0.90,
                 "n_steps": 2048,
                 "gae_lambda": 0.95,
                 "ent_coef": 0.01,
@@ -128,25 +128,26 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DQN Training and Inference")
+    parser.add_argument('--mode', type=str, required=True, choices=['train', 'inference'],
+                        help="Options are 'dqn', 'ddqn', '2dqn','per-dqn'.")
     args = parser.parse_args()
-
     args.model_steps = [
-        ("dqn", 50000),
-        ("dqn", 20000),
-        ("2dqn", 50000),
-        ("2dqn", 20000),
-        ("ddqn", 50000),
-        ("ddqn", 20000),
-        ("per-dqn", 50000),
-        ("per-dqn", 20000),
-        ("ppo", 50000),
-        ("ppo", 20000),
-        ("tppo", 50000),
-        ("tppo", 20000),
+        # ("dqn", 50000),
+        # ("dqn", 20000),
+        # ("2dqn", 50000),
+        # ("2dqn", 20000),
+        # ("ddqn", 50000),
+        # ("ddqn", 20000),
+        # ("per-dqn", 50000),
+        # ("per-dqn", 20000),
+        # ("ppo", 50000),
+        # ("ppo", 20000),
+        # ("tppo", 50000),
+        # ("tppo", 20000),
         ("icm-ppo", 50000),
         ("icm-ppo", 20000),
     ]
 
-    args.mode = "train"
+
     main(args)
 
