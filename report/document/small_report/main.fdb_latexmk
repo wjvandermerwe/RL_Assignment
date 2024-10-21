@@ -1,14 +1,14 @@
 # Fdb version 4
-["bibtex main"] 1729528169.846 "main.aux" "main.bbl" "main" 1729528170.14694 0
+["bibtex main"] 1729528169.846 "main.aux" "main.bbl" "main" 1729534883.55572 0
   "./example.bib" 1729528169 15396 05e6d110a32b92e7128714dc215419c5 ""
-  "./main-blx.bib" 1729527587 342 20d1170ef6c1d70c658d70e011e08dba ""
+  "./main-blx.bib" 1729534882 342 20d1170ef6c1d70c658d70e011e08dba ""
   "C:/Users/johan/AppData/Local/Programs/MiKTeX/bibtex/bst/biblatex/biblatex.bst" 1711466047 65510 b1f696b0241395385f422f67543c37fd ""
-  "main.aux" 1729527587 3389 5fa5202e68bfd68acdc57e7c46256938 "pdflatex"
+  "main.aux" 1729534882 3389 5fa5202e68bfd68acdc57e7c46256938 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1729527586.32018 "c:/Users/johan/PycharmProjects/RL_Assignment/report/document/small_report/main.tex" "main.pdf" "main" 1729528170.14733 0
+["pdflatex"] 1729534880.92236 "c:/Users/johan/PycharmProjects/RL_Assignment/report/document/small_report/main.tex" "main.pdf" "main" 1729534883.55661 0
   "C:/Users/johan/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1727892079 82705 9cc9f144eacd499bc23a611703921467 ""
   "C:/Users/johan/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1723120577 24265332 a44f1c99e5fc010044e9975fd6d69c37 ""
   "C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc" 1458473887 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -233,12 +233,12 @@
   "C:/Users/johan/AppData/Local/Programs/MiKTeX/tex/latex/xpatch/xpatch.sty" 1585221260 8510 7803f78066c4f9d008405191a4b43073 ""
   "Figures/logoWitsstackedcolourtransparent.png" 1724431852 611396 b9e1cfd263231e1981abe0a862368eae ""
   "ProposalAndThesis.cls" 1724431852 18377 c6a0b6eddfdc71be7c9a8b87228073e2 ""
-  "c:/Users/johan/PycharmProjects/RL_Assignment/report/document/small_report/main.tex" 1729527585 32169 435e62c083cb6e04616807c69f8df5db ""
-  "main.aux" 1729527587 3389 5fa5202e68bfd68acdc57e7c46256938 "pdflatex"
+  "c:/Users/johan/PycharmProjects/RL_Assignment/report/document/small_report/main.tex" 1729534880 32167 94abe6c883f50e24ee96a2b532a467af ""
+  "main.aux" 1729534882 3389 5fa5202e68bfd68acdc57e7c46256938 "pdflatex"
   "main.bbl" 1729528170 539 9b1193ea42022b65f5e4436756b83bc1 "bibtex main"
-  "main.out" 1729527587 1780 40c0c2289dc9f1beb963b0b2513e032a "pdflatex"
-  "main.run.xml" 1729527587 2553 1689e1e457107e1ba9de7449f066f039 "pdflatex"
-  "main.tex" 1729527585 32169 435e62c083cb6e04616807c69f8df5db ""
+  "main.out" 1729534882 1780 40c0c2289dc9f1beb963b0b2513e032a "pdflatex"
+  "main.run.xml" 1729534882 2553 1689e1e457107e1ba9de7449f066f039 "pdflatex"
+  "main.tex" 1729534880 32167 94abe6c883f50e24ee96a2b532a467af ""
   (generated)
   "main-blx.bib"
   "main.aux"

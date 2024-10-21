@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.8.8)  21 OCT 2024 18:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.8.8)  21 OCT 2024 20:21
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1026,6 +1026,9 @@ Package pdftex.def Info: Figures/logoWitsstackedcolourtransparent.png  used on i
 
 
 {C:/Users/johan/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc} <./Figures/logoWitsstackedcolourtransparent.png>]
+
+LaTeX Warning: Empty bibliography on input line 355.
+
 Chapter 1.
 
 

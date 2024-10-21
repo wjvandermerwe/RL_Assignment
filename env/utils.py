@@ -1,53 +1,42 @@
-import math
+import os
 
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-import numpy as np
-import seaborn as sns
+try:
+    from grid2op.Episode import EpisodeReplay
 
-def visualize_action_scatter(episodes_data):
+    _CAN_USE = True
+except ImportError:
+    # cannot use the save_log_gif function
+    _CAN_USE = False
+
+
+def save_log_gif(path_log, res, gif_name=None):
     """
-    Visualize the actions as a scatter plot to show their frequency and variety during episodes.
-    :param episodes_data: List of loaded EpisodeData objects.
+    Output a gif named (by default "episode.gif") that is the replay of the episode in a gif format,
+    for each episode in the input.
+
+    Parameters
+    ----------
+    path_log: ``str``
+        Path where the log of the agents are saved.
+
+    res: ``list``
+        List resulting from the call to `runner.run`
+
+    gif_name: ``str``
+        Name of the gif that will be used.
+
     """
-    plt.figure(figsize=(12, 8))
-    for i, episode_data in enumerate(episodes_data):
-        action_counts = {}
-        actions = episode_data.actions
+    if not _CAN_USE:
+        raise RuntimeError("Cannot use the \"save_log_gif\" function as the "
+                           "\"from grid2op.Episode import EpisodeReplay\" cannot be imported")
 
-        # Count actions taken during the episode
-        for act in actions:
-            action_type = act.act_name  # Assuming `act.act_name` gives an identifier for the action type
-            action_counts[action_type] = action_counts.get(action_type, 0) + 1
-
-        # Create scatter plot data for the episode
-        action_types = list(action_counts.keys())
-        counts = list(action_counts.values())
-        plt.scatter(action_types, counts, label=f"Episode {i}", alpha=0.6)
-
-    plt.xlabel("Action Type")
-    plt.ylabel("Frequency")
-    plt.xticks(rotation=45)
-    plt.title("Scatter Plot of Actions Taken in Episodes")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig("actions_scatter.png")
-
-def visualize_peak_load_heatmap(episodes_data, load_id=1):
-    """
-    Create a heatmap to show peak load occurrences over multiple episodes.
-    :param episodes_data: List of loaded EpisodeData objects.
-    :param load_id: ID of the load to visualize.
-    """
-    peak_loads = np.zeros((len(episodes_data), len(episodes_data[0].observations)))
-    for i, episode_data in enumerate(episodes_data):
-        for j, obs in enumerate(episode_data.observations):
-            dict_ = obs.state_of(load_id=load_id)
-            peak_loads[i, j] = dict_['p']
-
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(peak_loads, cmap='hot', cbar=True)
-    plt.xlabel("Timestep")
-    plt.ylabel("Episode Index")
-    plt.title(f"Heatmap of Load {load_id} Consumption Over Episodes")
-    plt.savefig("peak_load_heatmap.png")
+    init_gif_name = gif_name
+    ep_replay = EpisodeReplay(path_log)
+    for _, chron_name, cum_reward, nb_time_step, max_ts in res:
+        if gif_name is None:
+            gif_name = chron_name
+        gif_path = os.path.join(path_log, chron_name, gif_name)
+        print("Creating {}.gif".format(gif_name))
+        ep_replay.replay_episode(episode_id=chron_name, gif_name=gif_name, display=False)
+        print("Wrote {}.gif".format(gif_path))
+        gif_name = init_gif_name
