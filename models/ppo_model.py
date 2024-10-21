@@ -7,7 +7,7 @@ from stable_baselines3.common.buffers import BaseBuffer, RolloutBuffer
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.policies import BasePolicy, ActorCriticPolicy
 from stable_baselines3.common.torch_layers import create_mlp, FlattenExtractor
-from stable_baselines3.common.type_aliases import GymEnv, Schedule
+from stable_baselines3.common.type_aliases import GymEnv, Schedule, MaybeCallback
 from stable_baselines3.common.utils import get_schedule_fn, explained_variance
 from torch import nn
 import torch.nn.functional as F
@@ -200,6 +200,7 @@ class BasePPO(OnPolicyAlgorithm):
             policy,
             env,
             rollout_buffer_class=rollout_buffer_class,
+            # tb_log_name="PPO",
             **kwargs,
         )
 
@@ -220,7 +221,7 @@ class BasePPO(OnPolicyAlgorithm):
         clip_range = self.clip_range(self._current_progress_remaining)  # type: ignore[operator]
 
         pg_losses, value_losses, clip_fractions = [], [], []
-
+        losses = []
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
             # Do a complete pass on the rollout buffer
@@ -260,26 +261,46 @@ class BasePPO(OnPolicyAlgorithm):
 
                 # Optimization step
                 self.policy.optimizer.zero_grad()
-                loss.backward()
-
+                with torch.autograd.detect_anomaly():
+                    loss.backward()
+                losses.append(loss.item())
                 # Optional: Clip gradient norms to stabilize training
-                if self.max_grad_norm is not None:
-                    torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                # if self.max_grad_norm is not None:
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
 
                 self.policy.optimizer.step()
 
             self._n_updates += 1
 
-        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+            explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
 
-        # Logging
-        self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
-        self.logger.record("train/value_loss", np.mean(value_losses))
-        self.logger.record("train/clip_fraction", np.mean(clip_fractions))
-        self.logger.record("train/loss", loss.item())
-        self.logger.record("train/explained_variance", explained_var)
-        if hasattr(self.policy, "log_std"):
-            self.logger.record("train/std", torch.exp(self.policy.log_std).mean().item())
+            # Logging
+            self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
+            self.logger.record("train/value_loss", np.mean(value_losses))
+            self.logger.record("train/clip_fraction", np.mean(clip_fractions))
+            self.logger.record("train/loss", np.mean(losses))
+            self.logger.record("train/explained_variance", explained_var)
+            if hasattr(self.policy, "log_std"):
+                self.logger.record("train/std", torch.exp(self.policy.log_std).mean().item())
 
-        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-        self.logger.record("train/clip_range", clip_range)
+            self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+            self.logger.record("train/clip_range", clip_range)
+
+
+    def learn(
+            self,
+            total_timesteps: int,
+            callback: MaybeCallback = None,
+            log_interval: int = 4,
+            tb_log_name: str = "PPO",
+            reset_num_timesteps: bool = True,
+            progress_bar: bool = False,
+    ):
+        return super().learn(
+            total_timesteps=total_timesteps,
+            callback=callback,
+            log_interval=log_interval,
+            tb_log_name=tb_log_name,
+            reset_num_timesteps=reset_num_timesteps,
+            progress_bar=progress_bar,
+        )

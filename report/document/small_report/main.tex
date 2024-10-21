@@ -97,7 +97,7 @@ headsepline, % Uncomment to get a line under the header
 %	THESIS INFORMATION
 %----------------------------------------------------------------------------------------
 
-\thesistitle{COMS7071A Lab3: DQN Summary} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
+\thesistitle{COMS7071A Assignment: Grid2Op using DQN and PPO} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
 % \supervisor{Name of Supervisor Here} % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
 % \cosupervisor{Name of Co-supervisor Here (or Delete)} % Your co-supervisor's name, this is used in the title page, print it elsewhere with \cosupname
 %\examiner{} % Your examiner's name, this is not currently used anywhere in the template, print it elsewhere with \examname
@@ -356,141 +356,127 @@ headsepline, % Uncomment to get a line under the header
 
 %----------------------------------------------------------------------------------------
 
-\chapter{Training Process}
-The training process follows the loop as shown in Figure 3:
-
-\begin{enumerate}
-    \item \textbf{Replay Memory:} The agent stores transitions (state, action, reward, next state) in a replay buffer. This memory allows the agent to break correlations between sequential states by sampling random batches during the optimization step.
-    \item \textbf{Policy Network:} The policy network is the Q-network that chooses actions based on the current state of the environment. Actions can be selected using an epsilon-greedy strategy to balance exploration and exploitation.
-    \item \textbf{Target Network:} The target network is a delayed copy of the policy network, updated periodically. This helps stabilize training by providing fixed targets during the optimization process.
-    \item \textbf{Optimization:} At each step, a random batch of transitions is sampled from the replay memory. The policy network is optimized by minimizing the loss between predicted Q-values and target Q-values obtained from the target network.
-    \item \textbf{Target Network Update:} Occasionally, the target network is updated to the current policy network to maintain stable learning.
-\end{enumerate}
-
-The general training loop follows these steps:
-\begin{itemize}
-    \item Choose random or policy action based on the current state.
-    \item Sample the environment based on the action.
-    \item Record the transition (state, action, reward, next state) in replay memory.
-    \item Optimize the policy network using a random batch from the replay memory.
-    \item Occasionally update the target network with the policy network.
-\end{itemize}
-
-\chapter{Q-Network Architecture}
-The Q-Network is a neural network designed to approximate the Q-value function, \( Q(s, a) \). In this implementation, I adopt an architecture similar to the one described in the original DQN paper, tailored for processing image inputs from the Atari Pong environment. Below is a detailed explanation of its architecture:
-
-\paragraph{Input Layer:}
-I apply several preprocessing steps and wrappers to the environment which processes input from the Atari environemnt, which is the current state \( s_t \), which consists of a stack of recent frames. After preprocessing, the input state \( s_t \) is a tensor with shape \( [C, H, W] \), where \( C = 5 \) (number of stacked frames), and \( H = W = 84 \).
-\begin{itemize}
-    \item \textbf{NoopResetEnv:} Introduces a random number of no-op actions at the beginning to randomize initial conditions.
-    \item \textbf{MaxAndSkipEnv:} Skips frames to reduce computation and takes the maximum of consecutive frames to handle flickering.
-    \item \textbf{EpisodicLifeEnv:} Treats loss of lives as terminal states to provide more frequent learning signals.
-    \item \textbf{FireResetEnv:} Ensures the game is properly initialized if a 'FIRE' action is required to start.
-    \item \textbf{ClipRewardEnv:} Clamps rewards to the range \([-1, 1]\) to stabilize training.
-    \item \textbf{WarpFrame:} Converts frames to grayscale and resizes them to \(84 \times 84\) pixels to reduce computational complexity.
-    \item \textbf{PyTorchFrame:} Transposes frame dimensions to match PyTorch's \( C \times H \times W \) format.
-    \item \textbf{FrameStack:} Stacks the last \( k = 5 \) frames along the channel dimension to capture motion.
-\end{itemize}
-
-
-\paragraph{Hidden Layers:} which extract spatial and temporal features from the stacked frames, allowing the network to understand motion and object positions in the game.
-\begin{itemize}
-    \item \textbf{Convolutional Layers:}
-    \begin{itemize}
-        \item \textbf{First Convolutional Layer:}
-        \begin{itemize}
-            \item \textbf{Input Channels:} 5
-            \item \textbf{Output Channels:} 32
-            \item \textbf{Kernel Size:} \(8 \times 8\)
-            \item \textbf{Stride:} 4
-            \item \textbf{Activation:} ReLU
-        \end{itemize}
-        \item \textbf{Second Convolutional Layer:}
-        \begin{itemize}
-            \item \textbf{Input Channels:} 32
-            \item \textbf{Output Channels:} 64
-            \item \textbf{Kernel Size:} \(4 \times 4\)
-            \item \textbf{Stride:} 2
-            \item \textbf{Activation:} ReLU
-        \end{itemize}
-        \item \textbf{Third Convolutional Layer:}
-        \begin{itemize}
-            \item \textbf{Input Channels:} 64
-            \item \textbf{Output Channels:} 64
-            \item \textbf{Kernel Size:} \(3 \times 3\)
-            \item \textbf{Stride:} 1
-            \item \textbf{Activation:} ReLU
-        \end{itemize}
-    \end{itemize}
-    \item \textbf{Flattening:} The output of the final convolutional layer is flattened into a 1D vector to be fed into the fully connected layers.
-    \item \textbf{Fully Connected Layers:} The fully connected layer serves to combine the features extracted by the convolutional layers and to learn higher-level representations. First Fully Connected Layer, has a input size which is calculated based on the output of the convolutional layers. It has a output size of 512 neurons which is then activated with ReLU.
-\end{itemize}
-
-\paragraph{Output Layer:} 
-\begin{itemize}
-    \item \textbf{Action-Value Outputs:} Each output neuron corresponds to the Q-value \( Q(s_t, a) \) for a specific action \( a \). No activation function is applied to the output layer since Q-values are real numbers representing expected rewards. Ouput size is 6 discrete actions.
-    \item \textbf{Action Selection:} The agent selects the action \( a_t \) by choosing the action with the highest Q-value: \( a_t = \arg\max_a Q(s_t, a) \), unless exploring.
-
-\end{itemize}
-
-\paragraph{Loss Function:}
-\begin{itemize}
-    \item The network is trained to minimize the Temporal Difference (TD) error using the Mean Squared Error (MSE) loss.
-    \item For a minibatch of transitions sampled from the replay buffer, the loss function is computed as:
-    \[
-    L(\theta) = \frac{1}{N} \sum_{i=1}^{N} \left( r_i + \gamma \max_{a'} Q_{\text{target}}(s_{i+1}, a'; \theta^-) - Q(s_i, a_i; \theta) \right)^2
-    \]
-    where:
-    \begin{itemize}
-        \item \( N \) is the batch size.
-        \item \( r_i \) is the reward received after taking action \( a_i \) in state \( s_i \).
-        \item \( \gamma \) is the discount factor.
-        \item \( Q_{\text{target}}(s_{i+1}, a'; \theta^-) \) is the Q-value from the target network for the next state \( s_{i+1} \).
-        \item \( Q(s_i, a_i; \theta) \) is the predicted Q-value from the policy network for the current state-action pair.
-        \item \( \theta \) are the weights of the policy network, and \( \theta^- \) are the weights of the target network.
-    \end{itemize}
-    \item The network weights \( \theta \) are updated by minimizing this loss using the Adam optimizer with the specified learning rate.
-\end{itemize}
-
-\paragraph{Optimization:} Gradients are computed via backpropagation, and the optimizer adjusts the weights accordingly.
-
-\paragraph{Target Network:}
-A separate target network \( Q_{\text{target}} \) is maintained to provide stable targets during training. The weights \( \theta^- \) of the target network are periodically updated from the policy network \( \theta \) every specified number of steps (e.g., every 1,000 steps). This decoupling helps mitigate oscillations and divergence during training.
-
-\paragraph{Epsilon-Greedy Exploration:}
-The agent employs an epsilon-greedy strategy for action selection, with probability \( \epsilon \), a random action is selected (exploration), or with probability \( 1 - \epsilon \), the action with the highest Q-value is selected (exploitation).
-
-\paragraph{Epsilon Decay:} Epsilon \( \epsilon \) is decayed linearly from an initial value \( \epsilon_{\text{start}} = 1.0 \) to a minimum value \( \epsilon_{\text{end}} = 0.01 \) over a fraction of the total training steps. This strategy allows the agent to explore sufficiently while gradually focusing on exploiting learned behaviors.
-The decay is computed as:
-\[
-\epsilon_t = \epsilon_{\text{start}} + \left( \frac{t}{\epsilon_{\text{decay\_steps}}} \right) (\epsilon_{\text{end}} - \epsilon_{\text{start}})
-\]
-where \( t \) is the current timestep and \( \epsilon_{\text{decay\_steps}} \) is the total number of steps over which epsilon is decayed.
 
 
 
+\chapter{Model Architectures}
+
+The reinforcement learning algorithms selected for this study are Proximal Policy Optimization (PPO) and Deep Q-Network (DQN). These algorithms will be implemented and iteratively improved to optimize power grid operations in the Grid2Op environment.
+
+\section{Deep Q-Network (DQN)}
+DQN is a value-based method that approximates the optimal action-value function using deep neural networks, which is suitable for handling high-dimensional state spaces. DQN relies on a Q-learning framework combined with a deep neural network to approximate the optimal Q-values for each state-action pair, which enables the agent to make decisions that maximize expected rewards. Due to this algorithm already being part of prior assessments I don't cover the architecture indetail.
+
+\section{Proximal Policy Optimization (PPO)}
+PPO is a policy gradient method designed to optimize a parameterized policy by balancing exploration and exploitation while avoiding large, destabilizing policy updates. PPO's stability and efficiency stem from its use of a clipped surrogate objective function to limit the extent of each policy update, ensuring that learning is reliable without excessive policy divergence.
+
+PPO belongs to the category of policy optimization methods and utilizes an Actor-Critic architecture, which involves updating both the policy (actor) and the value function (critic). The primary goal of PPO is to constrain policy updates to prevent large steps that can destabilize learning. Unlike traditional policy gradient methods, PPO uses a clipped surrogate objective to regulate policy updates, thus ensuring stable and reliable training. Below, the structure and workings of PPO are detailed:
+
+\paragraph{Actor-Critic Architecture}: PPO uses an actor network, which outputs a probability distribution over actions, and a critic network, which estimates the value function—the expected return from a given state. The actor explores the action space by selecting actions probabilistically, while the critic provides feedback on the quality of the selected actions, thereby guiding the actor's learning.
+
+\paragraph{Clipped Surrogate Objective}: PPO maintains stability through the use of a clipped surrogate objective function. The objective function for PPO is given by:
+  
+  
+  \[ L^{CLIP}(\theta) = \mathbb{E}_t \left[ \min \left( r_t(\theta) \hat{A}_t, \text{clip}(r_t(\theta), 1 - \epsilon, 1 + \epsilon) \hat{A}_t \right) \right] \]
+
+  Here, \( r_t(\theta) = \frac{\pi_\theta(a_t | s_t)}{\pi_{\theta_{old}}(a_t | s_t)} \) represents the ratio of the probability of selecting action \( a_t \) under the updated policy to the probability under the old policy, and \( \hat{A}_t \) represents the advantage function. The advantage function quantifies how much better the chosen action is compared to the average action for the given state. The clipping operation constrains \( r_t(\theta) \) to lie within the interval \([1 - \epsilon, 1 + \epsilon]\), preventing updates that are excessively large or too small, thus keeping learning within a stable range.
+
+\paragraph{Advantage Estimation}: PPO employs Generalized Advantage Estimation (GAE) to compute the advantage function \( \hat{A}_t \). GAE is useful for reducing the variance in policy gradient estimates while preserving their accuracy, leading to more stable and efficient learning.
+
+  
+  \[ \hat{A}_t = \sum_{l=0}^\infty (\gamma \lambda)^l \delta_{t+l} \]
+  
+  Where \( \gamma \) is the discount factor, and \( \lambda \) controls the bias-variance tradeoff. The temporal difference (TD) error \( \delta_t \) measures how well the value function estimates the return compared to the observed outcome.
+
+\paragraph{Entropy Regularization}: Entropy regularization is employed in PPO to ensure that the policy maintains adequate exploration throughout the learning process. By adding an entropy term to the objective function, PPO encourages the policy to remain diverse in its action selection, thus preventing premature convergence to suboptimal strategies.
+
+\paragraph{Policy Updates}: The policy is updated using stochastic gradient ascent, aiming to maximize the clipped surrogate objective. To ensure stable and gradual learning, PPO performs multiple epochs of minibatch updates with a small learning rate. This process ensures that the policy does not change too drastically in any one update.
+
+\paragraph{Implementation Details}: During training, PPO alternates between collecting data by running the current policy in the environment and optimizing the clipped surrogate objective using the collected data. Key hyperparameters include the clipping threshold \( \epsilon \), the discount factor \( \gamma \), the GAE parameter \( \lambda \), and the number of epochs per iteration. Proper tuning of these hyperparameters is critical to the success of PPO in achieving stable learning.
 
 
 
-\chapter{Hyperparameters}
-The performance of the DQN agent heavily depends on the choice of hyperparameters. Below is a detailed list of the hyperparameters used in this implementation, along with their descriptions:
+\chapter{Model Improvements architectures}
+The methodology involves an iterative improvement process for both PPO and DQN. Initially, a base version of each algorithm will be implemented. Subsequently, three iterations of improvements will be applied to both agents. Each improvement is designed to incrementally enhance agent performance and robustness, allowing for an in-depth analysis of the impact of each enhancement.
 
-\begin{itemize}
-    \item \textbf{Seed:} 42, Used to initialize random number generators for reproducibility.
-    \item \textbf{Replay Buffer Size:} 5,000 transitions, The maximum number of past transitions stored in the replay buffer. A smaller buffer size speeds up training but may limit the diversity of experiences.
-    \item \textbf{Batch Size:} 256 transitions, the number of transitions sampled from the replay buffer for each training update. A larger batch size provides more stable gradient estimates.
-    \item \textbf{Learning Rate:} 0.0001, The step size used by the Adam optimizer to update the network weights. A lower learning rate helps in stable convergence.
-    \item \textbf{Discount Factor (\( \gamma \)):} 0.99, Balances immediate and future rewards in the Q-value updates. A value close to 1.0 considers future rewards more heavily.
-    \item \textbf{Number of Steps:} 1,000,000, the total number of training steps.
-    \item \textbf{Learning Starts:} 10,000 steps, the number of initial steps where the agent only collects experiences without updating the network. Allows the replay buffer to fill up before training begins.
-    \item \textbf{Learning Frequency:} Every 5 steps, specifies that the network is updated every 5 steps. Frequent updates can accelerate learning.
-    \item \textbf{Target Network Update Frequency:} 1,000 steps, the frequency (in steps) at which the target network \( \theta^- \) is updated with the policy network weights \( \theta \). Regular updates help stabilize training.
-    \item \textbf{Exploration Rate (\( \epsilon \)) Start Value:} 1.0, the initial probability of selecting a random action.
-    \item \textbf{Exploration Rate (\( \epsilon \)) End Value:} 0.01, the minimum probability of selecting a random action after decay.
-    \item \textbf{Exploration Fraction:} 0.1, the fraction of total training steps over which \( \epsilon \) is decayed from the start value to the end value. For example, if the total steps are 1,000,000, then \( \epsilon \) is decayed over the first 100,000 steps.
-    \item \textbf{Print Frequency:} Every 10 episodes, how often training statistics are printed to monitor progress.
-    \item \textbf{Optimizer:} Adam, the optimization algorithm used for training the network. Chosen for its adaptive learning rate properties.
-    \item \textbf{Frame Stack Size (\( k \)):} 5, the number of frames stacked together to form the state input. Provides temporal context to the agent.
-    \item \textbf{Learning Rate Scheduler:} Not used, A constant learning rate is maintained throughout training.
-\end{itemize}
+\section{DQN Improvements}
+
+\paragraph{Iteration 1} Implement Double DQN to mitigate overestimation bias in action-value estimation, leading to more accurate Q-value predictions and enhanced policy quality.
+
+Double DQN addresses a fundamental limitation of the original DQN: overestimation bias in action-value predictions. In traditional DQN, the same network is used for both action selection and evaluation, which tends to result in overly optimistic value estimates. Double DQN resolves this by using two separate networks—one to select actions and the other to evaluate their value.
+
+The key difference lies in how the target values are calculated. Instead of using the maximum Q-value estimated by the same network, Double DQN uses the main network to select the action and the target network to evaluate its value. This decoupling of action selection from action evaluation reduces the upward bias and results in more accurate value estimates.
+
+The implementation of Double DQN involves maintaining two neural networks: the primary Q-network and the target Q-network. The target network is updated periodically, providing a stable reference point for value calculations, while the main network is updated at each step. This helps maintain stability in the learning process by preventing rapid shifts in target estimates.
+
+The impact of Double DQN on training output is significant, as it reduces the likelihood of divergence and leads to more reliable policy learning. The reduced bias in value estimation contributes to smoother convergence and a more stable policy, which is particularly advantageous in complex environments like power grid management.
+
+\paragraph{Iteration 2}: Implement Dueling DQN to differentiate between the value of being in a state and the advantage of selecting specific actions, thereby enhancing learning efficiency.
+
+Dueling DQN introduces a novel architecture that separates the estimation of the state-value function from the advantage function. The state-value function estimates the value of being in a particular state, while the advantage function estimates the relative benefit of each possible action compared to an average action in that state.
+
+The key concept is that not all actions are equally important in every state. In many situations, the value of a state is independent of the specific action taken. By having separate streams for state-value and advantage estimation, Dueling DQN allows the network to focus on learning the value of the state itself without being overly influenced by the choice of action.
+
+Implementation involves modifying the network architecture to create two separate output streams: one for the state-value and one for the advantage function. These streams are then combined to compute the Q-values for each action. This architectural change allows the network to better differentiate between states that are generally good and actions that provide additional benefits, which accelerates the learning process.
+
+The output of Dueling DQN is a more efficient learning process with faster convergence. The separation of value and advantage leads to improved stability, particularly in environments where many actions yield similar outcomes. This allows the agent to better generalize across states and actions, resulting in more robust policies.
+
+\paragraph{Iteration 3}: Integrate Prioritized Experience Replay (PER) to improve learning efficiency by sampling important transitions more frequently, thereby focusing updates on the most informative experiences.
+
+    Prioritized Experience Replay (PER) enhances the efficiency of experience replay by assigning a priority value to each transition in the replay buffer, based on its temporal difference (TD) error. Transitions with larger TD errors indicate greater learning potential, as they represent situations where the agent's prediction was significantly incorrect.
+
+    The core idea behind PER is to focus the learning process on the experiences that will have the greatest impact on improving the policy. By prioritizing transitions with high TD errors, the agent can more effectively correct its mistakes, leading to faster learning and improved policy quality.
+
+    Implementation of PER requires modifying the replay buffer to maintain priority values for each transition. During sampling, transitions with higher priority are more likely to be replayed, ensuring that the agent focuses on learning from its most informative experiences. Additionally, importance sampling weights are used to correct any bias introduced by the prioritized sampling process, ensuring stable updates.
+
+    The impact of PER on output is significant, as it accelerates the convergence of the learning process. By focusing on key experiences, the agent is able to learn more effectively from limited data, which is particularly advantageous in environments with sparse rewards. This leads to more effective policy updates, reduced training time, and better overall performance.
+
+\section{PPO Improvements}
+
+\paragraph{Iteration 1}:
+    
+Implement the "Truly PPO" methodology as described in the 2020 paper by Yuhui Wang, Hao He, and Xiaoyang Tan. This iteration involves introducing a more adaptive approach to clipping, refined hyperparameter tuning, and improved balance between exploration and exploitation.
+
+The "Truly PPO" version aims to address limitations of the original PPO by enhancing the adaptability of the clipping mechanism. The clipping threshold is dynamic rather than fixed, enabling policy updates that are more context-sensitive. This adaptability results in more reliable learning, particularly in environments with diverse state distributions.
+
+The core enhancement lies in how the surrogate objective is managed. By making the clipping region adaptive, the agent can maintain a balance between stability and the capacity for significant learning updates. This modification allows the policy to evolve naturally, without the risk of becoming overly constrained or excessively volatile.
+
+Implementing "Truly PPO" necessitates careful hyperparameter adjustment to ensure optimal clipping behavior, which introduces computational overhead but yields significant improvements in policy stability and convergence. Extensive evaluation is needed to understand the impact of these adjustments across various phases of the training cycle.
+
+Overall, "Truly PPO" provides a framework that facilitates smoother, more stable updates, contributing to enhanced reward maximization over the long term.
+
+\paragraph{Iteration 2}:
+    
+Incorporate the Intrinsic Curiosity Module (ICM) to enhance exploration by introducing a curiosity-based reward signal. ICM models the prediction error of transitioning to new states, thereby fostering exploration in less-visited areas of the state space.
+
+The Intrinsic Curiosity Module augments the standard reward signal with an intrinsic reward based on prediction error. The ICM consists of a forward model and an inverse model. The forward model predicts the next state given the current state and action, while the inverse model predicts the action given consecutive states. The magnitude of the prediction error from the forward model serves as the intrinsic reward, which encourages the agent to visit states where it has a high level of uncertainty.
+
+The primary goal of ICM is to motivate exploration, particularly in environments where external rewards are sparse or delayed. This added incentive helps the agent discover new strategies that could yield better results. In power grid operations, ICM might encourage the agent to explore a wider range of control actions, which could lead to more robust grid management strategies.
+
+From an implementation perspective, integrating ICM requires modifying the neural network architecture to include the forward and inverse models, increasing computational complexity and training requirements. However, this added complexity is justified by the resulting improvements in exploration efficiency, leading to more robust policy performance.
+
+By encouraging exploration through intrinsic motivation, ICM helps mitigate the problem of premature convergence and ensures a more exhaustive search of the state-action space, ultimately resulting in a better-performing policy.
+
+\paragraph{Note}: No improvement 3 for ppo. A Candidate improvement was the novel ...... self imitation learning adaptation, the source code is included in the submission however results and runtimes not covered in the report.
+
+\chapter{Runtime And Configuration}
+
+\section{Environment Setup}
+The Grid2Op environment will be used to simulate power grid operations. Specifically, the "l2rpn\_case14\_sandbox" environment is chosen for its simplicity and focus on power flow management without adversarial components. The observation and action spaces will be adapted to suit both PPO and DQN agents, ensuring that the agents can effectively interact with the environment.
+The reward function used in this study is a **CombinedScaledReward**, which is a weighted combination of the L2RPN Reward and the N-1 Reward. This combined reward encourages the agents to maximize power flow while maintaining grid resilience by ensuring there are no single points of failure.
+
+\section{Train Time}
+\section{Inference}
+
+\section{Hyperparameters}
+
+\chapter{Evaluations}
+
+Each iteration will follow the same structure for evaluation:
+
+- **Iteration 1**: Evaluate the base agent's performance and analyze the impact of the first improvement.
+- **Iteration 2**: Assess the agent after the next improvement and compare against previous results.
+- **Iteration 3**: Final evaluation after the last improvement, summarizing overall progress and effectiveness.
+
+
+
 \end{document}  

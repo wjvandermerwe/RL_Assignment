@@ -1,5 +1,4 @@
 import numpy as np
-from stable_baselines3.common.buffers import ReplayBuffer
 from models.dqn_model import BaseDQN, DQNPolicy
 import torch
 import torch.nn.functional as F
@@ -59,11 +58,11 @@ class DoubleDQN(BaseDQN):
         )
 
     def train_step(self, batch):
-        losses = []
+
         states, actions, next_states, dones, rewards = batch
         q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
         target_q_values = self.policy.compute_double_dqn_target(rewards, next_states, dones, self.gamma)
         loss = F.mse_loss(q_values, target_q_values)
         self._optimize_model(loss)
-        self.logger.record("train/loss", np.mean(losses))
+
         return loss.item()

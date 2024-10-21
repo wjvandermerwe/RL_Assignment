@@ -1,7 +1,8 @@
-from typing import Optional, Union, Dict, Type, Any
 import torch
 from torch import nn
 from stable_baselines3.common.torch_layers import create_mlp
+import torch.nn.functional as F
+from models.iteration_2.ppo_model import PPOWithICM
 
 
 class SelfImitationLearning(nn.Module):
@@ -19,57 +20,17 @@ class SelfImitationLearning(nn.Module):
         return value, action_logits
 
 
-class PPOWithSIL(BasePPO):
+class PPOWithSIL(PPOWithICM):
     """
     PPO implementation with Self-Imitation Learning (SIL).
     """
     def __init__(
             self,
-            policy: Union[str, Type[BasePolicy]],
-            env: Union[GymEnv, str],
-            learning_rate: Union[float, Schedule] = 3e-4,
-            n_steps: int = 2048,
-            batch_size: int = 64,
-            n_epochs: int = 10,
-            gamma: float = 0.99,
-            gae_lambda: float = 0.95,
-            clip_range: Union[float, Schedule] = 0.2,
-            normalize_advantage: bool = True,
-            vf_coef: float = 0.5,
-            max_grad_norm: Optional[float] = None,
-            rollout_buffer_class: Optional[Type[RolloutBuffer]] = None,
-            rollout_buffer_kwargs: Optional[Dict[str, Any]] = None,
-            tensorboard_log: Optional[str] = None,
-            policy_kwargs: Optional[Dict[str, Any]] = None,
-            verbose: int = 0,
-            seed: Optional[int] = None,
-            device: Union[torch.device, str] = "auto",
-            _init_setup_model: bool = True,
+            **kwargs
     ):
         super().__init__(
-            policy,
-            env,
-            learning_rate,
-            n_steps,
-            batch_size,
-            n_epochs,
-            gamma,
-            gae_lambda,
-            clip_range,
-            normalize_advantage,
-            vf_coef,
-            max_grad_norm,
-            rollout_buffer_class,
-            rollout_buffer_kwargs,
-            tensorboard_log,
-            policy_kwargs,
-            verbose,
-            seed,
-            device,
-            _init_setup_model=False,
+            **kwargs
         )
-        if _init_setup_model:
-            self._setup_model()
         self.sil = SelfImitationLearning(input_dim=self.observation_space.shape[0], action_dim=self.action_space.n)
 
     def train(self):

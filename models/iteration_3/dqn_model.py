@@ -93,7 +93,6 @@ class PER_DQN(DuelingDQN):
         )
 
     def train_step(self, batch):
-
         states, actions, next_states, dones, rewards, indices, weights = batch
         q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
         target_q_values = self.policy.compute_double_dqn_target(rewards, next_states, dones, self.gamma)

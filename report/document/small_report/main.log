@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.8.8)  18 OCT 2024 09:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.8.8)  21 OCT 2024 18:19
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1014,7 +1014,7 @@ Package hyperref Info: Link coloring ON on input line 130.
 
 
 1: section
-<Figures/logoWitsstackedcolourtransparent.png, id=18, 1581.91pt x 1648.1575pt>
+<Figures/logoWitsstackedcolourtransparent.png, id=54, 1581.91pt x 1648.1575pt>
 File: Figures/logoWitsstackedcolourtransparent.png Graphic file (type png)
 <use Figures/logoWitsstackedcolourtransparent.png>
 Package pdftex.def Info: Figures/logoWitsstackedcolourtransparent.png  used on input line 151.
@@ -1027,91 +1027,95 @@ Package pdftex.def Info: Figures/logoWitsstackedcolourtransparent.png  used on i
 
 {C:/Users/johan/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc} <./Figures/logoWitsstackedcolourtransparent.png>]
 Chapter 1.
-LaTeX Font Info:    Trying to load font information for TS1+ppl on input line 372.
-(C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ts1ppl.fd
-File: ts1ppl.fd 2001/06/04 font definitions for TS1/ppl.
-)
+
 
 1: section
-LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 377.
+LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 373.
 (C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ppl.fd
 File: ot1ppl.fd 2001/06/04 font definitions for OT1/ppl.
 )
-LaTeX Font Info:    Trying to load font information for OML+zplm on input line 377.
+LaTeX Font Info:    Trying to load font information for OML+zplm on input line 373.
  (C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 377.
+LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 373.
  (C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 377.
+LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 373.
  (C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 377.
+LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 373.
  (C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1zplm.fd
 File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 ) [1
 
 
 ]
+Overfull \hbox (7.40685pt too wide) in paragraph at lines 376--377
+ []\T1/ppl/b/n/12 Clipped Sur-ro-gate Ob-jec-tive[] \T1/ppl/m/n/12 : PPO main-tains sta-bil-ity through the use of a clipped
+ []
+
+LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 379.
+(C:\Users\johan\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ufplmbb.fd
+File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
+)
 
 [2]
+
+[3]
 Chapter 2.
 
 
 1: section
-[3
+[4
 
 ]
-Overfull \hbox (13.81572pt too wide) in paragraph at lines 396--397
- []\T1/ppl/b/n/12 Hidden Lay-ers:[] \T1/ppl/m/n/12 which ex-tract spa-tial and tem-po-ral fea-tures from the stacked frames,
- []
-
-
-
-[4]
-Overfull \hbox (7.32063pt too wide) in paragraph at lines 431--432
-[]\T1/ppl/b/n/12 Action-Value Out-puts: \T1/ppl/m/n/12 Each out-put neu-ron cor-re-sponds to the Q-value $\OML/zplm/m/it/12 Q\OT1/zplm/m/n/12 (\OML/zplm/m/it/12 s[]\OT1/ppl/m/n/12 , \OML/zplm/m/it/12 a\OT1/zplm/m/n/12 )$
- []
-
-
 
 [5]
 
 [6]
+
+[7]
+
+[8]
 Chapter 3.
 
 
 1: section
-[7
+[9
 
 ]
+Chapter 4.
 
-[8] (main.aux)
+
+1: section
+[10
+
+] (main.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2020/03/25>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: F62ABB005917BE9C92768F92F195D1A4;401.
+(rerunfilecheck)             Checksum: 40C0C2289DC9F1BEB963B0B2513E032A;1780.
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 40778 strings out of 473899
- 908349 string characters out of 5726501
+ 40783 strings out of 473899
+ 908339 string characters out of 5726501
  1939960 words of memory out of 5000000
- 63062 multiletter control sequences out of 15000+600000
- 582682 words of font info for 87 fonts, out of 8000000 for 9000
+ 63055 multiletter control sequences out of 15000+600000
+ 585887 words of font info for 93 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  100i,21n,101p,1924b,1958s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmr.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmri.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplb8a.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplr8a.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on main.pdf (9 pages, 629722 bytes).
+<C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmbb.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmr.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/public/mathpazo/fplmri.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplb8a.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplr8a.pfb><C:/Users/johan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on main.pdf (11 pages, 643963 bytes).
 PDF statistics:
- 123 PDF objects out of 1000 (max. 8388607)
- 26 named destinations out of 1000 (max. 500000)
- 42 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 172 PDF objects out of 1000 (max. 8388607)
+ 36 named destinations out of 1000 (max. 500000)
+ 114 words of extra memory for PDF output out of 10000 (max. 10000000)
 

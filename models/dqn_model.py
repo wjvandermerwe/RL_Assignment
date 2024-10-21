@@ -133,10 +133,13 @@ class BaseDQN(OffPolicyAlgorithm):
     A custom DQN agent built on top of OffPolicyAlgorithm.
     """
 
-    def __init__(self, policy, env, learning_rate=1e-3, buffer_size=10000, tau=1.0, gamma=0.99, gradient_steps=1, target_update_interval=1000, replay_buffer_class=None,
+    def __init__(self, policy, env, learning_rate=1e-3,
+                 buffer_size=10000, tau=1.0,
+                 gamma=0.99, gradient_steps=1, target_update_interval=1000,
+                 replay_buffer_class=None,
                  exploration_fraction=0.1, exploration_initial_eps=1.0,
                  exploration_final_eps=0.05, max_grad_norm=10, policy_kwargs=None,
-                 verbose=0, device="cuda", _init_setup_model=None):
+                 verbose=0, device="cuda", _init_setup_model=None, **kwargs):
 
         super().__init__(
             policy=policy,
@@ -155,7 +158,7 @@ class BaseDQN(OffPolicyAlgorithm):
             seed=None,
             sde_support=False,
             optimize_memory_usage=False,
-
+            **kwargs
         )
         self._n_calls = 0
         self.device = torch.device(device)
@@ -169,7 +172,7 @@ class BaseDQN(OffPolicyAlgorithm):
     def train_step(self, batch):
 
         states, actions, next_states, dones, rewards = batch
-        losses = []
+
         # Q-values for actions taken
         q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
 
@@ -193,7 +196,7 @@ class BaseDQN(OffPolicyAlgorithm):
 
         # Backpropagation step
         self._optimize_model(loss)
-        self.logger.record("train/loss", np.mean(losses))
+
         return loss.item()
 
     def _optimize_model(self, loss):
@@ -213,10 +216,14 @@ class BaseDQN(OffPolicyAlgorithm):
 
     def train(self, gradient_steps: int, batch_size: int = 32):
         self.policy.set_training_mode(True)
+        self._update_learning_rate(self.policy.optimizer)
+        losses = []
         for _ in range(gradient_steps):
             self._adjust_exploration_rate()
             batch = self.replay_buffer.sample(batch_size)
             loss = self.train_step(batch)
+            losses.append(loss)
+        self.logger.record("train/loss", np.mean(losses))
         return loss
 
     def learn(

@@ -61,56 +61,17 @@ class Gym2OpEnv(gym.Env):
         self.action_space = self._gym_env.action_space
 
     def setup_observations(self):
-        env_config = {}
-        obs_attr_to_keep = ["rho", "p_or", "gen_p", "load_p"]
-        if "obs_attr_to_keep" in env_config:
-            obs_attr_to_keep = copy.deepcopy(env_config["obs_attr_to_keep"])
+        obs_attr_to_keep = ["rho", "p_or","q_or","a_or", "p_ex", "gen_p","gen_q","gen_v", "load_p","load_q"]
         self._gym_env.observation_space.close()
         self._gym_env.observation_space = BoxGymObsSpace(self._g2op_env.observation_space,
                                                          attr_to_keep=obs_attr_to_keep
                                                          )
-        # export observation space for the Grid2opEnv
-        self.observation_space = Box(shape=self._gym_env.observation_space.shape,
-                                     low=self._gym_env.observation_space.low,
-                                     high=self._gym_env.observation_space.high)
 
     def setup_actions(self):
-        env_config = {}
-        act_type = "discrete"
-        if "act_type" in env_config:
-            act_type = env_config["act_type"]
-
+        act_attr_to_keep = ["set_line_status","change_line_status", "set_bus", "change_bus","set_storage"]
         self._gym_env.action_space.close()
-        if act_type == "discrete":
-            # user wants a discrete action space
-            act_attr_to_keep = ["set_line_status_simple", "set_bus"]
-            if "act_attr_to_keep" in env_config:
-                act_attr_to_keep = copy.deepcopy(env_config["act_attr_to_keep"])
-            self._gym_env.action_space = DiscreteActSpace(self._g2op_env.action_space,
-                                                          attr_to_keep=act_attr_to_keep)
-            self.action_space = Discrete(self._gym_env.action_space.n)
-        elif act_type == "box":
-            # user wants continuous action space
-            act_attr_to_keep = ["redispatch", "set_storage", "curtail"]
-            if "act_attr_to_keep" in env_config:
-                act_attr_to_keep = copy.deepcopy(env_config["act_attr_to_keep"])
-            self._gym_env.action_space = BoxGymActSpace(self._g2op_env.action_space,
-                                                        attr_to_keep=act_attr_to_keep)
-            self.action_space = Box(shape=self._gym_env.action_space.shape,
-                                    low=self._gym_env.action_space.low,
-                                    high=self._gym_env.action_space.high)
-        elif act_type == "multi_discrete":
-            # user wants a multi-discrete action space
-            act_attr_to_keep = ["one_line_set", "one_sub_set"]
-            if "act_attr_to_keep" in env_config:
-                act_attr_to_keep = copy.deepcopy(env_config["act_attr_to_keep"])
-            self._gym_env.action_space = MultiDiscreteActSpace(self._g2op_env.action_space,
-                                                               attr_to_keep=act_attr_to_keep)
-            self.action_space = MultiDiscrete(self._gym_env.action_space.nvec)
-        else:
-            raise NotImplementedError(f"action type '{act_type}' is not currently supported.")
-
-
+        self._gym_env.action_space = DiscreteActSpace(self._g2op_env.action_space,
+                                                      attr_to_keep=act_attr_to_keep)
 
     def reset(self, seed=None):
         return self._gym_env.reset(seed=seed, options=None)
@@ -119,7 +80,6 @@ class Gym2OpEnv(gym.Env):
         return self._gym_env.step(action)
 
     def render(self):
-        # TODO: Modify for your own required usage
         return self._g2op_env.render()
 
 
