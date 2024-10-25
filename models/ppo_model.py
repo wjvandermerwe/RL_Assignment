@@ -183,6 +183,7 @@ class BasePPO(OnPolicyAlgorithm):
             batch_size: int = 64,
             n_epochs: int = 10,
             clip_range: Union[float, Schedule] = 0.2,
+            clip_range_vf: Union[None, float, Schedule] = None,
             normalize_advantage: bool = True,
             rollout_buffer_class: Optional[Type[RolloutBuffer]] = None,
             _init_setup_model: bool = True,
@@ -191,7 +192,7 @@ class BasePPO(OnPolicyAlgorithm):
         # Sanity check: `batch_size` must be greater than 1 to avoid NaN during normalization
         if normalize_advantage:
             assert batch_size > 1, "`batch_size` must be greater than 1."
-
+        self.clip_range_vf = clip_range_vf
         self.batch_size = batch_size
         self.n_epochs = n_epochs
         self.clip_range = clip_range
@@ -226,28 +227,20 @@ class BasePPO(OnPolicyAlgorithm):
         for epoch in range(self.n_epochs):
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
-                actions = rollout_data.actions
-                if isinstance(self.action_space, spaces.Discrete):
-                    # Convert discrete action from float to long
-                    actions = rollout_data.actions.long().flatten()
+                actions = self._get_actions(rollout_data)
 
                 # Evaluate the policy on the current batch of observations and actions
                 values, log_prob, _ = self.policy.evaluate_actions(rollout_data.observations, actions)
                 values = values.flatten()
-
                 # Normalize advantage
-                advantages = rollout_data.advantages
-                if self.normalize_advantage and len(advantages) > 1:
-                    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                advantages = self._normalize_advantage(rollout_data.advantages)
 
                 # Ratio between the new policy and the old policy
                 ratio = torch.exp(log_prob - rollout_data.old_log_prob)
 
-                # Clipped surrogate loss
-                policy_loss_1 = advantages * ratio
-                policy_loss_2 = advantages * torch.clamp(ratio, 1 - clip_range, 1 + clip_range)
-                policy_loss = -torch.min(policy_loss_1, policy_loss_2).mean()
-                pg_losses.append(policy_loss.item())
+                # cliped surrogate
+                policy_loss, clip_fraction = self._compute_policy_loss(advantages, ratio, log_prob,
+                                                                       rollout_data.old_log_prob)
 
                 clip_fraction = torch.mean((torch.abs(ratio - 1) > clip_range).float()).item()
                 clip_fractions.append(clip_fraction)
@@ -259,33 +252,102 @@ class BasePPO(OnPolicyAlgorithm):
                 # Total loss
                 loss = policy_loss + self.vf_coef * value_loss
 
-                # Optimization step
-                self.policy.optimizer.zero_grad()
-                with torch.autograd.detect_anomaly():
-                    loss.backward()
-                losses.append(loss.item())
-                # Optional: Clip gradient norms to stabilize training
-                # if self.max_grad_norm is not None:
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
-
-                self.policy.optimizer.step()
+                self._optimize_policy(loss)
 
             self._n_updates += 1
+            self._record_training_metrics(None, pg_losses, value_losses,None, clip_fractions)
 
-            explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+    def _normalize_advantage(self, advantages):
+        if self.normalize_advantage and len(advantages) > 1:
+            return (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        return advantages
 
-            # Logging
-            self.logger.record("train/policy_gradient_loss", np.mean(pg_losses))
-            self.logger.record("train/value_loss", np.mean(value_losses))
+    def _compute_policy_loss(self, advantages, ratio, log_prob, old_log_prob):
+        clip_range = self.clip_range(self._current_progress_remaining)
+        policy_loss_1 = advantages * ratio
+        policy_loss_2 = advantages * torch.clamp(ratio, 1 - clip_range, 1 + clip_range)
+        policy_loss = -torch.min(policy_loss_1, policy_loss_2).mean()
+        clip_fraction = torch.mean((torch.abs(ratio - 1) > clip_range).float()).item()
+        return policy_loss, clip_fraction
+
+    def _record_training_metrics(self, entropy_losses, pg_losses, value_losses, approx_kl_divs, clip_fractions,
+                                 icm_losses=None, sil_losses=None):
+        explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+
+        # Policy gradient loss
+        if pg_losses is not None:
+            pg_loss_mean = np.mean(pg_losses)
+            self.logger.record("train/policy_gradient_loss", pg_loss_mean)
+        else:
+            pg_loss_mean = 0
+
+        # Value loss
+        if value_losses is not None:
+            value_loss_mean = np.mean(value_losses)
+            self.logger.record("train/value_loss", value_loss_mean)
+        else:
+            value_loss_mean = 0
+
+        # Entropy loss (for PPO)
+        if entropy_losses is not None:
+            entropy_loss_mean = np.mean(entropy_losses)
+            self.logger.record("train/entropy_loss", entropy_loss_mean)
+        else:
+            entropy_loss_mean = 0  # Assume 0 if entropy losses are not used
+
+        # ICM loss (if ICM is used)
+        if icm_losses is not None:
+            icm_loss_mean = np.mean(icm_losses)
+            self.logger.record("train/icm_loss", icm_loss_mean)
+        else:
+            icm_loss_mean = 0  # If ICM is not used, set to 0
+
+        # SIL loss (if SIL is used)
+        if sil_losses is not None:
+            sil_loss_mean = np.mean(sil_losses)
+            self.logger.record("train/sil_loss", sil_loss_mean)
+        else:
+            sil_loss_mean = 0  # If SIL is not used, set to 0
+
+        # KL divergence for early stopping (if used)
+        if approx_kl_divs is not None:
+            self.logger.record("train/approx_kl", np.mean(approx_kl_divs))
+
+        # Clip fraction
+        if clip_fractions is not None:
             self.logger.record("train/clip_fraction", np.mean(clip_fractions))
-            self.logger.record("train/loss", np.mean(losses))
-            self.logger.record("train/explained_variance", explained_var)
-            if hasattr(self.policy, "log_std"):
-                self.logger.record("train/std", torch.exp(self.policy.log_std).mean().item())
 
-            self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-            self.logger.record("train/clip_range", clip_range)
+        # Calculate and log the total loss (including optional components like entropy, ICM, and SIL)
+        total_loss = pg_loss_mean + self.vf_coef * value_loss_mean + self.ent_coef * entropy_loss_mean + icm_loss_mean + sil_loss_mean
+        self.logger.record("train/loss", total_loss)
 
+        # Record explained variance
+        self.logger.record("train/explained_variance", explained_var)
+
+        # Record standard deviation if the policy has log_std (for continuous action spaces)
+        if hasattr(self.policy, "log_std"):
+            self.logger.record("train/std", torch.exp(self.policy.log_std).mean().item())
+
+        # Number of updates
+        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+
+        # Record the clipping ranges
+        self.logger.record("train/clip_range", self.clip_range(self._current_progress_remaining))
+        if self.clip_range_vf is not None:
+            self.logger.record("train/clip_range_vf", self.clip_range_vf(self._current_progress_remaining))
+
+    def _optimize_policy(self, loss):
+        self.policy.optimizer.zero_grad()
+        loss.backward()
+        # Clip gradient norms
+        torch.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+        self.policy.optimizer.step()
+
+    def _get_actions(self, rollout_data):
+        actions = rollout_data.actions
+        if isinstance(self.action_space, spaces.Discrete):
+            actions = rollout_data.actions.long().flatten()
+        return actions
 
     def learn(
             self,

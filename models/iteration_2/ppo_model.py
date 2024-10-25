@@ -9,8 +9,9 @@ from stable_baselines3.common.vec_env import VecEnv
 from torch import nn
 from stable_baselines3.common.torch_layers import create_mlp
 import torch.nn.functional as F
+
 from models.iteration_1.ppo_model import TrulyProximalPPO
-from models.ppo_model import RolloutBuffer
+from models.ppo_model import RolloutBuffer, BasePPO
 
 
 class RolloutBufferSamplesWithNextObs(NamedTuple):
@@ -89,11 +90,18 @@ class ICMModule(nn.Module):
         # Extract features
         phi_state = self.feature_net(state)
         phi_next_state = self.feature_net(next_state)
+
+        # Ensure actions are properly expanded if needed
+        if len(action.shape) == 1:  # Discrete actions case
+            action = F.one_hot(action.long(), num_classes=self.inverse_net[-1].out_features).float()
+
         # Predict action based on features (inverse model)
         pred_action = self.inverse_net(torch.cat([phi_state, phi_next_state], dim=-1))
 
-        # Predict next features based on action and current features (forward model)
+        # Concatenate features and actions
+        # Ensure that phi_state and action have compatible shapes
         pred_phi_next_state = self.forward_net(torch.cat([phi_state, action], dim=-1))
+
         return pred_action, pred_phi_next_state, phi_next_state
 
 
@@ -121,13 +129,13 @@ class PPOWithICM(TrulyProximalPPO):
         # Update optimizer learning rate
         self._update_learning_rate(self.policy.optimizer)
 
-        entropy_losses, pg_losses, value_losses, clip_fractions, icm_losses = [], [], [], [], []
         continue_training = True
 
         # Train for n_epochs epochs
         for epoch in range(self.n_epochs):
             approx_kl_divs = []
 
+            entropy_losses, pg_losses, value_losses, clip_fractions, icm_losses = [], [], [], [], []
             # Iterate over the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
                 # Policy training part
@@ -152,12 +160,11 @@ class PPOWithICM(TrulyProximalPPO):
 
                 # Optimize the policy and ICM networks
                 self._optimize_policy(total_loss)
-
+            self._record_training_metrics(entropy_losses, pg_losses, value_losses, approx_kl_divs, clip_fractions, icm_losses)
             self._n_updates += 1
             if not continue_training:
                 break
 
-        self._record_training_metrics(entropy_losses, pg_losses, value_losses, approx_kl_divs, clip_fractions)
 
     def _train_policy(self, rollout_data):
         actions = self._get_actions(rollout_data)
@@ -304,3 +311,8 @@ class PPOWithICM(TrulyProximalPPO):
         callback.on_rollout_end()
 
         return True
+
+    def load(self, **kwargs):
+        self.use_sde=False
+        super().load(**kwargs)
+
