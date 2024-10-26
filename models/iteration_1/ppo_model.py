@@ -1,23 +1,12 @@
 import torch
 import torch.nn.functional as F
-import numpy as np
-from typing import Optional, Union, Dict, Type, Any
+from typing import Optional
 from gymnasium import spaces
-from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.buffers import RolloutBuffer
-from stable_baselines3.common.policies import ActorCriticPolicy
-from stable_baselines3.common.type_aliases import GymEnv, Schedule
-from stable_baselines3.common.utils import get_schedule_fn, explained_variance
-
+from stable_baselines3.common.utils import get_schedule_fn
 from models.ppo_model import BasePPO
 
 
 class TrulyProximalPPO(BasePPO):
-    """
-    Truly Proximal Policy Optimization (TPPO) implementation.
-    This class extends PPO with adaptive clipping and KL divergence monitoring to ensure truly proximal updates.
-    """
-
     def __init__(
             self,
             target_kl: Optional[float] = 0.01,
@@ -33,28 +22,19 @@ class TrulyProximalPPO(BasePPO):
 
     def _setup_model(self) -> None:
         super()._setup_model()
-        # Initialize schedules for policy and value clipping
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
 
     def train(self) -> None:
-        """
-        Update policy using the current rollout buffer with adaptive clipping and KL divergence monitoring.
-        """
-        # Set policy to training mode
         self.policy.set_training_mode(True)
-        # Update optimizer learning rate
         self._update_learning_rate(self.policy.optimizer)
-
         continue_training = True
 
-        # Train for n_epochs epochs
         for epoch in range(self.n_epochs):
             approx_kl_divs = []
 
             entropy_losses, pg_losses, value_losses, clip_fractions = [], [], [], []
-            # Iterate over the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
                 actions = self._get_actions(rollout_data)
                 values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
@@ -73,19 +53,14 @@ class TrulyProximalPPO(BasePPO):
                 entropy_loss = self._compute_entropy_loss(log_prob, entropy)
                 entropy_losses.append(entropy_loss.item())
 
-                # Total loss
                 loss = policy_loss + self.vf_coef * value_loss + self.ent_coef * entropy_loss
 
-                # Compute approximate KL divergence for early stopping
                 approx_kl_div = self._compute_approx_kl(log_prob, rollout_data.old_log_prob)
                 approx_kl_divs.append(approx_kl_div)
 
-                # Stop training early if KL divergence is too large
                 if not self._check_continue_training(approx_kl_div, epoch):
                     continue_training = False
                     break
-
-                # Optimize the policy
                 self._optimize_policy(loss)
 
             self._record_training_metrics(entropy_losses, pg_losses, value_losses, approx_kl_divs, clip_fractions)

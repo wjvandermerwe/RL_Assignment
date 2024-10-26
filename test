@@ -1,0 +1,34 @@
+cumulative_rewards = []
+            episode_lengths = []
+
+            # Run 250 episodes in one go
+            res = runner.run(nb_episode=250)
+
+            # Extract and store the results from each episode
+            for _, chron_name, cum_reward, nb_time_step, max_ts in res:
+                cumulative_rewards.append(cum_reward)  # Store cumulative reward
+                episode_lengths.append(nb_time_step)  # Store episode length
+
+                # Print episode summary (optional for tracking)
+                msg_tmp = f"\tFor chronics located at {chron_name}\n"
+                msg_tmp += f"\t\t - cumulative reward: {cum_reward:.6f}\n"
+                msg_tmp += f"\t\t - number of time steps completed: {nb_time_step} / {max_ts}"
+                print(msg_tmp)
+
+            # Plot cumulative rewards over episodes
+            plt.figure()
+            plt.plot(cumulative_rewards, label="Cumulative Reward")
+            plt.xlabel("Episode")
+            plt.ylabel("Cumulative Reward")
+            plt.title("Cumulative Reward over Episodes")
+            plt.legend()
+            plt.savefig(f'cumulative_rewards_{model_type}.png')
+
+            # Plot episode lengths over episodes
+            plt.figure()
+            plt.plot(episode_lengths, label="Episode Length")
+            plt.xlabel("Episode")
+            plt.ylabel("Episode Length")
+            plt.title("Episode Length over Episodes")
+            plt.legend()
+            plt.savefig(f'episode_lengths_{model_type}.png')

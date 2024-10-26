@@ -10,23 +10,10 @@ from stable_baselines3.common.torch_layers import FlattenExtractor, BaseFeatures
 from stable_baselines3.common.type_aliases import TrainFreq, PyTorchObs, TrainFrequencyUnit, ReplayBufferSamples, \
     MaybeCallback
 
-
 class QNetwork(BasePolicy):
     def __init__(self, obs_shape, observation_space, action_space, features_extractor: BaseFeaturesExtractor,features_dim=None, net_arch=None, activation_fn=nn.ReLU):
-        """
-        Q-Value Network for DQN.
-
-        :param obs_shape: Shape of the observation space.
-        :param action_space: Action space.
-        :param net_arch: Network architecture as a list of layer sizes.
-        :param activation_fn: Activation function to use between layers.
-        """
         super().__init__(observation_space=observation_space, action_space=action_space,features_extractor=features_extractor)
-
-        # If no custom architecture is provided, use default [64, 64]
-        if net_arch is None:
-            net_arch = [64, 64]
-
+        net_arch = [64, 64]
         self.obs_shape = obs_shape
         self.action_dim = action_space.n
         self.activation_fn = activation_fn
@@ -37,38 +24,16 @@ class QNetwork(BasePolicy):
         #unpack
         self.q_net = nn.Sequential(*q_net)
 
-    # def forward(self, obs):
-    #     return self.q_net(obs)
-
     def forward(self, obs: PyTorchObs) -> torch.Tensor:
-        """
-        Predict the q-values.
-
-        :param obs: Observation
-        :return: The estimated Q-Value for each action.
-        """
         return self.q_net(self.extract_features(obs, self.features_extractor))
 
 
     def _predict(self, observation: PyTorchObs, deterministic: bool = True) -> torch.Tensor:
         q_values = self(observation)
-        # Greedy action
         action = q_values.argmax(dim=1).reshape(-1)
         return action
 
-
-
-
 class DQNPolicy(BasePolicy):
-    """
-    DQN Policy with Q-Network and Target Network.
-
-    :param observation_space: Observation space.
-    :param action_space: Action space.
-    :param net_arch: Architecture of the Q-Network.
-    :param activation_fn: Activation function to use between layers.
-    :param normalize_images: Whether to normalize images or not.
-    """
     q_net: QNetwork
     q_net_target: QNetwork
 
@@ -80,13 +45,9 @@ class DQNPolicy(BasePolicy):
             net_arch: Optional[List[int]] = None,
             features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
             activation_fn: Type[nn.Module] = nn.ReLU,
-            # normalize_images: bool = True,
-            # optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
-            # optimizer_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__(observation_space=observation_space, action_space=action_space, features_extractor_class=features_extractor_class)
 
-        # Network arguments
         self.net_args = {
             "obs_shape": observation_space.shape,
             "observation_space": observation_space,
@@ -95,22 +56,17 @@ class DQNPolicy(BasePolicy):
             "activation_fn": activation_fn,
         }
 
-        # Build the Q-Networks
         self.q_net = self.make_q_net()
         self.q_net_target = self.make_q_net()
         self.q_net_target.load_state_dict(self.q_net.state_dict())
         self.q_net_target.eval()
 
-        # Optimizer setup
+
         self.optimizer = self.optimizer_class(self.q_net.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
 
 
     def make_q_net(self) -> QNetwork:
-        """
-        Creates the Q-Network using the specified architecture.
-        """
-        # Make sure we always have separate networks for features extractors etc
         net_args = self._update_features_extractor(self.net_args, features_extractor=None)
         return QNetwork(**net_args).to(self.device)
 
@@ -123,16 +79,9 @@ class DQNPolicy(BasePolicy):
         return action
 
     def update_target_network(self):
-        """
-        Update the target network weights with the Q-network weights.
-        """
         self.q_net_target.load_state_dict(self.q_net.state_dict())
 
 class BaseDQN(OffPolicyAlgorithm):
-    """
-    A custom DQN agent built on top of OffPolicyAlgorithm.
-    """
-
     def __init__(self, policy, env, learning_rate=1e-3,
                  buffer_size=10000, tau=1.0,
                  gamma=0.99, gradient_steps=1, target_update_interval=1000,
@@ -172,29 +121,16 @@ class BaseDQN(OffPolicyAlgorithm):
     def train_step(self, batch):
 
         states, actions, next_states, dones, rewards = batch
-
-        # Q-values for actions taken
         q_values = self.policy.q_net(states).gather(1, actions.view(-1, 1)).squeeze(1)
 
-        # q_values = self.policy.q_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
-
-        # Target Q-values using target network
         with torch.no_grad():
-            # next_q_values = self.policy.q_net_target(next_states).max(dim=1)[0]
-
             next_q_values = self.policy.q_net_target(next_states)
-            # Follow greedy policy: use the one with the highest value
             next_q_values, _ = next_q_values.max(dim=1)
-            # Avoid potential broadcast issue
             next_q_values = next_q_values.reshape(-1, 1)
-            # next_q_values = next_q_values.reshape(-1,1).squeeze(0)
             target_q_values = rewards + self.gamma * next_q_values * (1 - dones)
             target_q_values = target_q_values.squeeze(1)
 
-        # Loss calculation
         loss = F.mse_loss(q_values, target_q_values)
-
-        # Backpropagation step
         self._optimize_model(loss)
 
         return loss.item()
